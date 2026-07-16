@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: deeptrade-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: USE_NGROK
+        value: "false"
+      - key: PUBLIC_URL
+        value: "https://deeptrade-backend.onrender.com"
+      # You will need to add the following secrets in the Render dashboard:
+      # - UPSTOX_CLIENT_ID
+      # - UPSTOX_CLIENT_SECRET
+      # - UPSTOX_TELEGRAM_BOT_TOKEN
+
+  - type: web
+    name: deeptrade-frontend
+    env: static
+    buildCommand: cd src/ui && npm install && npm run build
+    staticPublishPath: ./src/ui/dist
+    envVars:
+      - key: VITE_API_URL
+        value: "https://deeptrade-backend.onrender.com"
