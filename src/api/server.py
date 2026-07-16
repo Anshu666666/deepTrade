@@ -461,6 +461,18 @@ async def get_thread_history(thread_id: str):
     
     return {"messages": history, "artifacts": []}
 
+import urllib.request
+
+@app.get("/ip")
+async def get_ip():
+    try:
+        req = urllib.request.Request("https://api.ipify.org")
+        with urllib.request.urlopen(req) as response:
+            ip = response.read().decode('utf-8')
+        return {"ip": ip}
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/upstox/callback")
 async def upstox_callback(code: str = None):
     if not code:
