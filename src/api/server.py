@@ -468,10 +468,16 @@ async def upstox_callback(code: str = None):
     
     client_id = os.environ.get("UPSTOX_CLIENT_ID")
     client_secret = os.environ.get("UPSTOX_CLIENT_SECRET")
-    redirect_uri = os.environ.get("UPSTOX_REDIRECT_URI")
+    
+    # We dynamically constructed the redirect URI based on the webhook domain.
+    webhook_domain = await db.get_setting("WEBHOOK_DOMAIN")
+    if webhook_domain:
+        redirect_uri = f"{webhook_domain}/upstox/callback"
+    else:
+        redirect_uri = None
     
     if not all([client_id, client_secret, redirect_uri]):
-        return HTMLResponse("<h2>Error: Missing UPSTOX_CLIENT_ID, UPSTOX_CLIENT_SECRET, or UPSTOX_REDIRECT_URI in .env</h2>")
+        return HTMLResponse("<h2>Error: Missing UPSTOX_CLIENT_ID, UPSTOX_CLIENT_SECRET in .env, or WEBHOOK_DOMAIN not configured in DB.</h2>")
 
     url = 'https://api.upstox.com/v2/login/authorization/token'
     headers = {
