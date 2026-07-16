@@ -80,3 +80,20 @@ DeepTrade implements a "First-Come, First-Served" security lock to protect your 
 3. The server looks at the unique `chat_id` from that incoming message, sees that the `ADMIN_CHAT_ID` in the database is empty, and immediately saves that user's `chat_id` into the database as the permanent Admin.
 4. It sends a confirmation message to that user: *"🔐 Security Lock Active: This bot is now permanently locked to your Telegram account."*
 5. From that point forward, if any other random user on Telegram finds your bot and tries to send a message, the server compares their `chat_id` to the `ADMIN_CHAT_ID`. Because they don't match, the server simply ignores them and drops the request, ensuring nobody else can place trades on your Upstox account.
+
+### 7. Upstox Static IP Whitelisting & IPv6 Issues (UDAPI1154)
+The Upstox Live API requires you to whitelist your server's outbound IP address in the Developer Console. If the IP address does not match exactly, you will receive the `UDAPI1154: Access to this API is blocked due to static IP restrictions` error when attempting to place trades.
+
+**The Shared IP Problem (Cloud Providers):**
+If you deploy to the free tier of a cloud provider (like Render), your server shares its outbound IP with hundreds of other apps. If another developer on Render has already whitelisted that exact shared IP on their Upstox account, you will get an *"IP address already assigned"* error when trying to claim it, because Upstox requires unique static IPs per developer account.
+
+**The IPv6 Connectivity Problem (Local Testing):**
+When testing locally via Ngrok, you must whitelist your home WiFi's public IP address. However, modern Indian ISPs (like Jio or Airtel) use **IPv6** natively to route traffic to `api.upstox.com`. 
+Even if you lookup your IPv4 address (e.g. `49.36.144.6`) and whitelist it, Upstox will still block your trades because it sees the request originating from your IPv6 address (e.g. `2405:201:4039:5035:9171:7999:a453:33d`).
+
+**The Fix (Dual IP Whitelisting via API):**
+The Upstox developer console UI doesn't always handle IPv6 perfectly. To fix this, DeepTrade includes a utility script (`update_ip.py`) that uses the Upstox API to programmatically assign BOTH your IPv4 and IPv6 addresses as your `primary_ip` and `secondary_ip`.
+1. You must have an active live token stored in the database.
+2. Edit `update_ip.py` and replace the IPs in the `data` dictionary with the exact IPs printed in your server logs during a failed order (the IPv4 from ipify.org, and the IPv6 from the `UDAPI1154` error response).
+3. Run `python update_ip.py`.
+4. *Important:* Upon successfully updating your IPs, Upstox will instantly invalidate your current access token for security reasons. You must re-login and generate a new token via Telegram before trading again.

@@ -1,0 +1,19 @@
+.morph-container {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  filter: url(#threshold);
+  height: 1.2em; /* Keep space for text */
+  width: 300px; /* Adjust based on max word length */
+  vertical-align: middle;
+}
+
+.morph-text {
+  position: absolute;
+  width: 100%;
+  display: inline-block;
+  text-align: center;
+  user-select: none;
+  font-family: 'Lastik', serif;
+}

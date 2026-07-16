@@ -2,7 +2,7 @@
 trigger: always_on
 ---
 
-# C:\Users\anshu\Desktop\research_deep_agent\venv\Lib\site-packages
+# C:\Users\anshu\OneDrive\Desktop\deepTrade-master\venv\Lib\site-packages\deepagents
 
 1. The source code for deegagents, langchain, langgraph packages is present. Refer to these source code for getting clarity on actual framework code, syntax, functions etc
 3. Always refer before writing new code, features, fixing bugs

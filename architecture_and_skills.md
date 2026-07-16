@@ -1,9 +1,9 @@
 # [DeepTrade] - ARCHITECTURE & KNOWLEDGE SKILL FILE
 
 ## 1. System Overview & Core Value Prop
-- **High-Level Purpose:** An autonomous financial research and analysis agent system that gathers real-time market data, web intelligence, and SEC filings to synthesize structured research reports and artifacts interactively.
-- **Primary Tech Stack:** Python (FastAPI, Uvicorn, LangChain/LangGraph, DeepAgents), Node.js (Vite, React, TypeScript, SWC/Oxc) for the UI frontend, PostgreSQL (Supabase) with `psycopg_pool` for backend persistence, and OpenRouter for LLM inference.
-- **Key Constraints/Design Philosophy:** Event-driven and highly observable. Relies heavily on Server-Sent Events (SSE) streaming to surface granular agent interactions (reasoning tokens, tool calls, and artifact emissions). Operates a multi-agent orchestrated graph (Supervisor ➔ Subagents). State is checkpointed to Postgres implicitly via LangGraph abstractions.
+- **High-Level Purpose:** An autonomous financial research and analysis agent system that gathers real-time market data, web intelligence, and SEC filings to synthesize structured research reports and execute live trades interactively via both a Web UI and a Telegram Bot.
+- **Primary Tech Stack:** Python (FastAPI, Uvicorn, LangChain/LangGraph, DeepAgents), Telegram Bot API (`aiogram`), Node.js (Vite, React, TypeScript, SWC/Oxc) for the UI frontend, PostgreSQL (Supabase) with `psycopg_pool` for backend persistence, and OpenRouter for LLM inference.
+- **Key Constraints/Design Philosophy:** Event-driven and highly observable. Relies heavily on Server-Sent Events (SSE) streaming for the Web UI and background task webhooks for Telegram to surface granular agent interactions (reasoning tokens, tool calls, and artifact emissions). Operates a multi-agent orchestrated graph (Supervisor ➔ Subagents). State is checkpointed to Postgres implicitly via LangGraph abstractions.
 
 ## 2. Directory Structure & Component Mapping
 - `main.py`: Application entry point; bootstraps the FastAPI server via Uvicorn.
@@ -21,9 +21,13 @@
 - `src/ui/`: Isolated Vite+React frontend application utilizing a modern, strict TypeScript setup and Oxlint.
 
 ## 3. End-to-End Control Flow & Execution Paths
-**Primary Execution Path: Interactive Research Request (`/chat/stream`)**
+**Primary Execution Path 1: Web UI Request (`/chat/stream`)**
 1. **API Ingestion:** `src/api/server.py` (`chat_stream`) receives `ChatRequest`, generates a `query_id`, and opens a streaming response returning `generate_sse_events()`.
 2. **Background Execution:** `generate_sse_events` drops a `SystemMessage` and `HumanMessage` into the state and dispatches `run_graph()` to run inside an `asyncio.create_task()`.
+
+**Primary Execution Path 2: Telegram Bot Request (`/webhook/telegram`)**
+1. **API Ingestion:** Telegram sends a JSON update to the webhook endpoint. `src/api/telegram_bot.py` processes the message and drops it into a `BackgroundTasks` queue to return a fast `200 OK` to Telegram.
+2. **Background Execution:** The background task drops a `HumanMessage` into the state and dispatches `run_graph()`. Intermediate steps (reasoning, tool calls) are safely swallowed or summarized, while final text responses and Markdown artifacts are transmitted back to the user via the `aiogram` Bot instance.
 3. **Graph Streaming:** `run_graph` iterates over `graph.astream(..., stream_mode=["messages", "updates"])`.
 4. **Event Interception & Logging:** As the Supervisor and subagents emit updates, `run_graph` parses them into distinct `log_type`s (e.g., `REASONING`, `TOOL_CALL`, `ARTIFACT`).
 5. **Persistence & Broadcast:** `src/api/db.py` (`insert_event`) asynchronously writes these events into the `query_events` Postgres table while simultaneously pushing the raw JSON data to the `asyncio.Queue` feeding the SSE stream.
