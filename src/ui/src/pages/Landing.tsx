@@ -262,7 +262,7 @@ const Landing: React.FC = () => {
               <div key="gap12" />,
               <a key="12" href="https://valyu.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoValyu} alt="Valyu" className="object-contain w-[130px] md:w-[165px] max-w-none brightness-200" /></a>,
             ]}
-            speed={22}
+            speed={38}
           />
         </div>
         
