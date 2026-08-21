@@ -1,7 +1,7 @@
 <div align="center">
 
 # DeepTrade 📈🤖
-### Autonomous AI-Powered Algorithmic Trading & Financial Research Agent
+### Conversational Market Research & Direct Upstox Execution Assistant
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](https://fastapi.tiangolo.com/)
@@ -10,9 +10,22 @@
 [![Interface](https://img.shields.io/badge/Interface-Telegram%20Bot-2CA5E0.svg)](https://core.telegram.org/bots)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-*Execute trades, monitor portfolios, perform real-time fundamental & technical equity research, and receive synthesized market reports — directly inside Telegram and a modern Web UI.*
+*Perform deep fundamental & web equity research and manage your Upstox account (orders, positions, holdings, funds) directly from Telegram using natural language — without ever opening the Upstox app.*
 
 </div>
+
+---
+
+## 🎯 What is DeepTrade?
+
+**DeepTrade** is a personal, self-hosted AI financial research companion and conversational broker terminal. 
+
+Instead of juggling between web search engines, financial news portals, and broker order pads, DeepTrade brings your entire research and execution workflow into a single Telegram chat:
+
+1. **AI Market & Financial Research**: Automatically queries **Valyu** (real-time financial fundamentals & SEC filings) and **Exa** (semantic web search & news) to synthesize structured company analyses.
+2. **Direct Upstox Execution from Chat**: Buy, sell, modify, or cancel orders directly through chat prompts (e.g. *"Buy 1 share of PCJEWELLER"*). The AI fetches the real-time LTP and prompts you with interactive `[✅ Confirm]` / `[❌ Cancel]` buttons before executing.
+3. **Hands-Free Portfolio Monitoring**: Check your live holdings, intraday positions, available margins/funds, and today's order book instantly without logging into the Upstox portal.
+4. **Zero Accidental Trades**: Built with strict two-step confirmation dialogs—no order is ever placed without you explicitly clicking the inline Confirm button.
 
 ---
 
@@ -32,16 +45,16 @@ flowchart TB
     end
 
     subgraph AgentSystem["DeepAgent Engine (src/agent/graph.py)"]
-        SUP["🧠 DeepTrade Agent (Supervisor)<br/>(OpenRouter / poolside / nemotron)"]
-        SKILLS["📁 Progressive Skills System<br/>(/skills/upstox/SKILL.md)"]
-        TOOLS["⚡ Unified Tool Suite<br/>• Upstox Market Data & Orders<br/>• Exa Web Search<br/>• Valyu SEC & Financial Data"]
+        SUP["🧠 DeepTrade Supervisor Agent<br/>(OpenRouter / poolside / nemotron)"]
+        SKILLS["📁 Upstox Skills & Rules<br/>(/skills/upstox/SKILL.md)"]
+        TOOLS["⚡ Unified Tool Suite<br/>• Upstox Market Data & Orders<br/>• Exa Web Search<br/>• Valyu Financial Fundamentals"]
         SUP <--> SKILLS
         SUP --> TOOLS
     end
 
     subgraph Persistence["Storage & Broker Services"]
         PG[("🐘 PostgreSQL (Supabase)<br/>State Checkpoints & Token Storage")]
-        BROKER["📈 Upstox Live / Sandbox API<br/>(Orders, LTP, Portfolio, Funds)"]
+        BROKER["🏦 Upstox Live Broker API<br/>(Orders, LTP, Portfolio, Funds)"]
         MOCK[("📝 Mock Sandbox Registry<br/>(₹10,00,000 Virtual Ledger)")]
     end
 
@@ -51,25 +64,25 @@ flowchart TB
     PRECHECK --> BG
     BG --> SUP
     SUP -.->|Checkpoint & Memory| PG
-    TOOLS -->|Live Market & Orders| BROKER
+    TOOLS -->|Live Quotes & Confirmed Orders| BROKER
     TOOLS -->|Sandbox Mode| MOCK
 ```
 
 ---
 
-## ✨ Key Capabilities
+## ✨ Key Features
 
-- **💬 Conversational Trading & Live Execution**: Issue natural language commands (e.g., *"Buy 1 share of PCJEWELLER"*, *"Show my open positions"*, *"Analyze TCS fundamentals"*).
-- **🛡️ Interactive Two-Step Order Confirmations**: Prevents unintended orders. Generates native Telegram Inline Keyboard Buttons (`[✅ Confirm]` / `[❌ Cancel]`) with an automated 5-minute timeout.
-- **⚡ Deterministic Pre-Flight IP & Token Verification**: Proactively verifies that your Upstox access token is active and your network's public IP matches Upstox's whitelisted static IP *before* sending prompts to the LLM, eliminating wasted tokens and unexpected API errors.
-- **🔄 Auto-Syncing Dynamic IP Whitelisting**: Automatically detects changes in your local ISP's IPv4/IPv6 addresses and programmatically updates Upstox static IP settings via API.
-- **🧠 Deep Financial Research**: Direct tool integrations to fetch live quotes (Upstox LTP/OHLC), SEC filings (Valyu), and real-time financial news (Exa) to synthesize structured markdown reports.
-- **🧪 Hybrid Live vs. Simulated Sandbox Mode**: Toggle seamlessly between `/live` and `/sandbox`. In Sandbox mode, DeepTrade runs a local ₹1,000,000 virtual ledger (`sandbox_db.json`) while pulling real-time market prices.
-- **🔒 Hardened Single-User Security Lock**: Locks permanently to the first Telegram user who messages it (`chat_id`), immediately rejecting all unauthorized external interactions.
+- **💬 Natural Language Broker Commands**: Issue plain English instructions like *"What are my current positions?"*, *"How much margin do I have left?"*, or *"Buy 1 share of TCS at 3850 limit"*.
+- **🛡️ Interactive Two-Step Order Confirmations**: The agent never places an order automatically. It drafts the order preview and presents native Telegram Inline Keyboard Buttons (`[✅ Confirm]` / `[❌ Cancel]`) with a 5-minute safety timeout.
+- **📑 Real-Time Equity & SEC Research**: Type `/analyse <ticker>` or ask questions about recent earnings, valuation metrics, and balance sheets. The agent searches financial filings (Valyu) and live market news (Exa).
+- **⚡ Deterministic Pre-Flight IP & Token Verification**: Checks that your Upstox token is valid and your current network IP matches Upstox's whitelisted static IP *before* sending prompts to the LLM, eliminating wasted tokens and broken requests.
+- **🔄 Auto-Syncing Dynamic IP Whitelisting**: If your ISP changes your public IP address, DeepTrade automatically detects the change and updates your Upstox static IP settings via API.
+- **🧪 Hybrid Live vs. Paper Trading Sandbox**: Switch instantly between `/live` (real Upstox account) and `/sandbox` (simulated ₹1,000,000 virtual ledger with real-time live prices).
+- **🔒 Hardened Single-User Security Lock**: The bot permanently locks to the first Telegram user who messages it (`chat_id`), immediately dropping all messages from unauthorized accounts.
 
 ---
 
-## 📱 Interactive Telegram Trading Flow
+## 📱 Interactive Telegram Flow
 
 ```mermaid
 sequenceDiagram
@@ -101,11 +114,9 @@ sequenceDiagram
 
 ## 📚 Documentation & Architecture Guides
 
-DeepTrade comes with comprehensive architectural and operational documentation:
-
 | Document | Purpose |
 | :--- | :--- |
-| **[Setup & Environment Guide (`setup_instructions.md`)](./setup_instructions.md)** | Step-by-step guide for configuring all API keys, local Ngrok vs Cloud deployment, daily OAuth token generation, and static IP whitelisting. |
+| **[Setup & Environment Guide (`setup_instructions.md`)](./setup_instructions.md)** | Step-by-step guide for configuring API keys, local Ngrok vs Cloud hosting, daily token refresh, and static IP whitelisting. |
 | **[Architecture & Skills Spec (`architecture_and_skills.md`)](./architecture_and_skills.md)** | Deep architectural breakdown of DeepAgent graph, SSE event streaming, database schemas, and SDK workarounds. |
 | **[Upstox Tools & Agent Spec (`upstox_tools_and_subagents.md`)](./upstox_tools_and_subagents.md)** | Complete parameter reference for all trading tools, sandbox mock registry, and Telegram command mappings. |
 
@@ -191,20 +202,20 @@ python main.py
 
 | Command | Action |
 | :--- | :--- |
-| `/start` or `/help` | Shows welcome message, bot status, and available commands. |
+| `/start` or `/help` | Shows welcome message, bot status, and command list. |
 | `/sandbox` | Switches session to simulated paper trading (₹1,000,000 virtual balance). |
-| `/live` | Switches session to real-money live broker execution. |
+| `/live` | Switches session to real-money Upstox broker execution. |
 | `/new` | Clears conversation state and initializes a fresh research thread. |
 | `/analyse <ticker>` | Initiates end-to-end technical & fundamental equity research. |
 | `/news <topic>` | Fetches and summarizes recent market catalysts and sector news. |
-| `/deepdive <topic>` | Conducts multi-agent financial deep-dive with structured markdown report. |
+| `/deepdive <topic>` | Conducts exhaustive financial deep-dive with structured markdown report. |
 
 ---
 
-## 🔐 Security & Risk Disclaimer
+## 🔐 Security & Disclaimer
 
-> [!WARNING]
-> **Educational and Personal Use Only**: Algorithmic and autonomous AI trading carries substantial financial risk. Large Language Models can hallucinate, experience latency, or make unexpected decisions. Always test your strategies in `/sandbox` mode before deploying live capital. The creator of DeepTrade assumes no liability for trading losses.
+> [!NOTE]
+> **Personal Productivity Tool**: DeepTrade is a conversational assistant designed to help individual traders research stocks and execute commands on their own Upstox account. It does **not** provide automated financial advice or execute algorithmic trades on your behalf. All orders require explicit manual confirmation via the interactive inline buttons.
 
 ---
 
