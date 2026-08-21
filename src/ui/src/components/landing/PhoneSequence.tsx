@@ -130,6 +130,8 @@ const PhoneSequence: React.FC = () => {
           scrub: 0.1,    // Smooth tight scrubbing
           pin: true,
           pinSpacing: true, // Ensures it leaves space when unpinning
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
         }
       });
 
@@ -158,7 +160,12 @@ const PhoneSequence: React.FC = () => {
       // Dummy tween to keep it pinned while Section 3 scrolls over it
       tl.to({}, { duration: 1.0 });
 
-      const handleResize = () => renderFrame(playhead.frame);
+      ScrollTrigger.refresh();
+
+      const handleResize = () => {
+        renderFrame(playhead.frame);
+        ScrollTrigger.refresh();
+      };
       window.addEventListener('resize', handleResize);
       
       return () => window.removeEventListener('resize', handleResize);
@@ -178,8 +185,8 @@ const PhoneSequence: React.FC = () => {
       {/* mix-blend-screen makes the black background of the mockup frames completely transparent! */}
       <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none mix-blend-screen" />
 
-      {/* Content block: starts strictly below the top header (top-[58px] on mobile), centered on desktop */}
-      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-[56px] sm:top-[70px] md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
+      {/* Content block: starts comfortably below the fixed header (top-20 on mobile), centered on desktop */}
+      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-20 sm:top-24 md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
 
         <h2
           className="font-normal mb-1 sm:mb-2 md:mb-4"

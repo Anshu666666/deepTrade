@@ -85,7 +85,12 @@ const Landing: React.FC = () => {
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 200);
+
     return () => {
+      clearTimeout(timer);
       lenis.destroy();
       gsap.ticker.remove(raf);
     };
