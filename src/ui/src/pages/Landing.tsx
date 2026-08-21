@@ -271,11 +271,25 @@ const Landing: React.FC = () => {
         <div className="absolute top-[75%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-white/[0.03] rounded-full blur-[100px] pointer-events-none z-0" />
 
         {/* SECTION 3: THE ENGINE */}
-        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-32 md:gap-0 pt-16 md:pt-0">
+        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0">
           {/* Top vignette — same gradient as Section 1 bottom */}
           <div className="absolute top-0 left-0 w-full h-[30dvh] bg-gradient-to-b from-black via-black/80 to-transparent z-10 pointer-events-none" />
-          {/* Video & MacBook Container */}
-          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:left-[8%] lg:left-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center">
+
+          {/* Text Section (Left on desktop, First on mobile) */}
+          <div className="max-w-xl w-full text-center md:text-left z-20 relative md:w-[45%] md:ml-12 lg:ml-24 pb-8 md:pb-0 pointer-events-auto">
+            <h2 
+              className="font-normal mb-6" 
+              style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
+            >
+              The Autonomous Analyst.
+            </h2>
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-lg md:mr-auto" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+              DeepTrade doesn't just display data — it researches it. Powered by Exa for real-time web intelligence and Valyu for financial datasets and filings, the agent pulls from both and synthesizes it into one clear answer, not a wall of raw numbers.
+            </p>
+          </div>
+
+          {/* Video & MacBook Container (Right on desktop, Second on mobile) */}
+          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:right-[8%] lg:right-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0">
             {/* Native Demo Video */}
             <div className="w-full bg-black border border-zinc-800 rounded-xl shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
               <video
@@ -296,19 +310,6 @@ const Landing: React.FC = () => {
               alt="MacBook Mockup" 
               className="absolute -bottom-20 -left-4 md:-bottom-24 md:-left-16 lg:-bottom-32 lg:-left-24 w-44 md:w-64 lg:w-[400px] object-contain z-20 pointer-events-none drop-shadow-2xl"
             />
-          </div>
-
-          {/* Text Section */}
-          <div className="max-w-xl w-full text-center md:text-right z-10 relative md:w-[45%] pb-16 md:pb-0">
-            <h2 
-              className="font-normal mb-6" 
-              style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
-            >
-              The Autonomous Analyst.
-            </h2>
-            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-lg md:ml-auto" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
-              DeepTrade doesn't just display data — it researches it. Powered by Exa for real-time web intelligence and Valyu for financial datasets and filings, the agent pulls from both and synthesizes it into one clear answer, not a wall of raw numbers.
-            </p>
           </div>
         </div>
 
@@ -375,10 +376,10 @@ const Landing: React.FC = () => {
         <div className="w-full h-48 md:h-80 lg:h-[480px] pointer-events-none" />
 
         {/* SECTION 5: SECURITY & SANDBOX */}
-        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
+        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
           
-          {/* Text Section (Left) - Enhanced with z-30 pointer-events-auto */}
-          <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[45%] md:ml-12 lg:ml-24 pointer-events-auto">
+          {/* Text Section (Right on desktop, First on mobile) */}
+          <div className="max-w-xl w-full text-center md:text-right z-30 relative md:w-[45%] md:mr-12 lg:mr-24 pointer-events-auto">
             <h2 
               className="font-normal mb-6" 
               style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
@@ -393,8 +394,8 @@ const Landing: React.FC = () => {
             </p>
           </div>
 
-          {/* Visuals Container (Right) - z-10 */}
-          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:right-[8%] lg:right-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
+          {/* Visuals Container (Left on desktop, Second on mobile) */}
+          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:left-[8%] lg:left-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
             {/* Vault Component */}
             <div className="w-full flex items-center justify-center relative z-10">
               <VaultLock 
