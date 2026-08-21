@@ -171,14 +171,14 @@ const Landing: React.FC = () => {
           <MorphText texts={['intelligence.', 'markets.', 'execution.']} />
         </h1>
 
-        <p className="text-zinc-200 text-lg md:text-xl max-w-[650px] text-center mt-6 mb-10 md:mb-12 leading-tight tracking-wide" style={{ textShadow: '0 4px 25px rgba(0,0,0,0.8), 0 2px 12px rgba(0,0,0,0.6)' }}>
+        <p className="text-[#e2e2e8] text-sm sm:text-base md:text-lg max-w-[580px] text-center mt-5 mb-10 md:mb-12 leading-relaxed tracking-wide" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,1)' }}>
           DeepTrade is a conversational financial research and broker execution assistant for individual traders — one AI that analyzes markets, synthesizes filings and news, and executes confirmed orders on your Upstox account directly from chat.
         </p>
 
       </div>
 
       {/* Bottom Text - Centered and Raised */}
-      <div className="absolute bottom-12 md:bottom-20 left-0 w-full px-6 flex flex-col md:flex-row justify-center items-center gap-4 md:gap-12 z-20 box-border pointer-events-none" style={{ textShadow: '0 4px 15px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.6)' }}>
+      <div className="absolute bottom-12 md:bottom-20 left-0 w-full px-6 flex flex-col md:flex-row justify-center items-center gap-4 md:gap-12 z-20 box-border pointer-events-none" style={{ textShadow: '0 4px 15px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.95)' }}>
         <div className="text-white/70 text-[0.7rem] md:text-xs tracking-widest uppercase flex flex-col md:flex-row gap-2 md:gap-6 items-center text-center">
           <span>Deep Financial Research</span>
           <span className="hidden md:block w-1 h-1 rounded-full bg-white/30"></span>
@@ -249,11 +249,11 @@ const Landing: React.FC = () => {
           {/* Video & MacBook Container */}
           <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:left-[8%] lg:left-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center">
             {/* YouTube Demo Video */}
-            <div className="w-full aspect-video bg-zinc-900/80 border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
+            <div className="w-full aspect-video bg-black border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
               <iframe
-                src="https://www.youtube-nocookie.com/embed/WCs9sa--8Qc?rel=0&modestbranding=1"
+                src="https://www.youtube-nocookie.com/embed/WCs9sa--8Qc?rel=0&modestbranding=1&playsinline=1"
                 title="DeepTrade Demo Video"
-                className="w-full h-full border-0"
+                className="w-full h-full border-0 scale-[1.12] md:scale-[1.15] transform origin-center transition-transform"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
@@ -275,7 +275,7 @@ const Landing: React.FC = () => {
             >
               The Autonomous Analyst.
             </h2>
-            <p className="text-zinc-400 text-lg leading-snug md:text-xl">
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-lg md:ml-auto" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               DeepTrade doesn't just display data — it researches it. Powered by Exa for real-time web intelligence and Valyu for financial datasets and filings, the agent pulls from both and synthesizes it into one clear answer, not a wall of raw numbers.
             </p>
           </div>
@@ -287,8 +287,8 @@ const Landing: React.FC = () => {
           style={{
             '--s4-label-gap':      'clamp(1.5rem, 3vw, 2.5rem)',
             '--s4-heading-gap':    'clamp(1.75rem, 3.5vw, 3rem)',
-            '--s4-para-gap':       'clamp(1.25rem, 2.5vw, 2rem)',
-            '--s4-line-height':    '1.35',
+            '--s4-para-gap':       'clamp(1rem, 2vw, 1.5rem)',
+            '--s4-line-height':    '1.5',
             '--s4-label-tracking': '0.2em',
           } as React.CSSProperties}
         >
@@ -316,8 +316,8 @@ const Landing: React.FC = () => {
 
             {/* Body copy */}
             <div
-              className="text-zinc-400 text-base md:text-lg max-w-2xl flex flex-col"
-              style={{ lineHeight: 'var(--s4-line-height)', gap: 'var(--s4-para-gap)' }}
+              className="text-zinc-300 text-xs sm:text-sm md:text-base max-w-2xl flex flex-col"
+              style={{ lineHeight: 'var(--s4-line-height)', gap: 'var(--s4-para-gap)', textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}
             >
               <p className="m-0">
                 DeepTrade is fully open-source — audit it, fork it, make it yours. Bring
@@ -351,10 +351,10 @@ const Landing: React.FC = () => {
             >
               Fortified Freedom.
             </h2>
-            <p className="text-zinc-400 text-lg leading-snug md:text-xl mb-6">
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed mb-4" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               Trade with confidence. DeepTrade is guarded by a rigorous 7-day Time-Based One-Time Password (TOTP) cycle, ensuring your active session remains yours alone.
             </p>
-            <p className="text-zinc-400 text-lg leading-snug md:text-xl">
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               Not ready to risk capital? Engage the Sandbox Mock Registry. The agent simulates real market executions with a virtual portfolio, letting you practice research and order execution with ₹10,00,000 in virtual funds and zero financial exposure.
             </p>
           </div>

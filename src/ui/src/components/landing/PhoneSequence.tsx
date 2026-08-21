@@ -166,25 +166,25 @@ const PhoneSequence: React.FC = () => {
           <FlipText delay={0.2} together={false} duration={10}>Trade Anywhere.</FlipText>
         </h2>
         
-        {/* GAP AFTER PARAGRAPH — clamp: 16px on small screens → 32px on large */}
+        {/* GAP AFTER PARAGRAPH — clamp: 12px on small screens → 20px on large */}
         <p
-          className="text-zinc-400 text-lg md:text-xl leading-snug"
-          style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)', marginBottom: 'clamp(12px, 2vh, 16px)' }}
+          className="text-zinc-300 text-sm sm:text-base leading-relaxed"
+          style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.95)', marginBottom: 'clamp(10px, 1.5vh, 14px)' }}
         >
           Execute orders, receive intelligence, and manage risk directly from your <LineHoverLink variant="pulse">Telegram app</LineHoverLink>. 
         </p>
 
         <p
-          className="text-zinc-400 text-lg md:text-xl leading-snug"
-          style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)', marginBottom: 'clamp(16px, 3vh, 32px)' }}
+          className="text-zinc-300 text-sm sm:text-base leading-relaxed"
+          style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.95)', marginBottom: 'clamp(14px, 2.5vh, 24px)' }}
         >
           Connects directly to your own Upstox account via secure OAuth — the same account you already trade on, no separate sign-up.
         </p>
 
-        {/* GAP AFTER SUPERVISOR SECTION — clamp: 16px on small screens → 32px on large */}
-        <div className="hidden md:block space-y-4" style={{ marginBottom: 'clamp(16px, 3vh, 32px)' }}>
+        {/* GAP AFTER SUPERVISOR SECTION — clamp: 16px on small screens → 28px on large */}
+        <div className="hidden md:block space-y-2.5" style={{ marginBottom: 'clamp(14px, 2.5vh, 28px)' }}>
             <h3 className="text-xs tracking-[0.2em] text-[#54A1FD] uppercase font-semibold">The Supervisor Agent</h3>
-            <p className="text-zinc-300 text-sm leading-relaxed md:text-base">
+            <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95)' }}>
               One agent, not a black box. Every reasoning step, market lookup, and tool call streams to you in real time — and every trade requires your explicit confirmation before a single order touches your account. Nothing executes without you seeing it first.
             </p>
         </div>

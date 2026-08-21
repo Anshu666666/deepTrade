@@ -45,19 +45,39 @@ export interface Thread {
 
 export const COMMANDS = [
   {
+    name: '/analyse',
+    desc: 'Deep fundamental & equity analysis (e.g. /analyse TATAMOTORS)',
+    instruction: 'Perform a comprehensive financial analysis using live web intelligence (Exa) and financial filings/fundamentals (Valyu).',
+  },
+  {
     name: '/news',
-    desc: 'Quick market news brief + sentiment  (e.g. /news NVDA)',
-    instruction: 'The user wants a quick news brief. Use the /news workflow: delegate to DataCollector to fetch recent news (last 48h), write findings to /research/news_<TICKER>.md, then summarize for the user.',
+    desc: 'Latest market news & sentiment (e.g. /news RELIANCE)',
+    instruction: 'Fetch and summarize the latest financial and market news using Exa web search.',
   },
   {
-    name: '/analyze',
-    desc: 'Structured fundamental analysis report  (e.g. /analyze AAPL)',
-    instruction: 'The user wants a structured analysis. Use the /analyze workflow: delegate DataCollector to gather financials + news and write to /research/data_<TICKER>.md, then delegate FinancialAnalyst to read it and produce a full report.',
+    name: '/deepdive',
+    desc: 'Exhaustive equity research report (e.g. /deepdive INFY)',
+    instruction: 'Conduct a comprehensive deep-dive research report synthesizing fundamentals, filings, news, and market performance.',
   },
   {
-    name: '/deep-dive',
-    desc: 'Exhaustive multi-angle research report  (e.g. /deep-dive TSLA)',
-    instruction: 'The user wants a comprehensive deep-dive. Use the /deep-dive workflow: launch TWO DataCollector tasks in parallel (one for news/sentiment, one for financials/SEC), then have FinancialAnalyst synthesize both into a full deep-dive report.',
+    name: '/holdings',
+    desc: 'View your live long-term Upstox portfolio holdings',
+    instruction: 'Check and display my current Upstox holdings.',
+  },
+  {
+    name: '/positions',
+    desc: 'View open intraday and F&O positions',
+    instruction: 'Check and display my open Upstox intraday positions.',
+  },
+  {
+    name: '/orders',
+    desc: 'View today\'s Upstox order book and status',
+    instruction: 'Fetch and display my today\'s Upstox order book.',
+  },
+  {
+    name: '/funds',
+    desc: 'Check available trading margin and cash balance',
+    instruction: 'Check my available Upstox funds, cash balance, and margin.',
   },
   {
     name: '/toggle',
