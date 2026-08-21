@@ -7,7 +7,11 @@ from dotenv import load_dotenv
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-load_dotenv()
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+load_dotenv(os.path.join(ROOT_DIR, ".env"))
 from src.api import db
 
 import urllib.request

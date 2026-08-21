@@ -145,7 +145,7 @@ export const LaunchModal: React.FC<LaunchModalProps> = ({
               </CandyButton>
 
               <a
-                href={`${githubUrl}/blob/master/setup_instructions.md`}
+                href={`${githubUrl}/blob/master/docs/setup_instructions.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-[9999px] border border-white/15 bg-white/5 hover:bg-white/10 text-zinc-200 text-xs sm:text-sm font-medium transition-colors no-underline"

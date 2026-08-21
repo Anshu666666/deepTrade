@@ -1,9 +1,15 @@
 import os
+import sys
 import asyncio
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Ensure project root is in sys.path
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+# Load environment variables from project root
+load_dotenv(os.path.join(ROOT_DIR, ".env"))
 
 import src.api.db as db
 

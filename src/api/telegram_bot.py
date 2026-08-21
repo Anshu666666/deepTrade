@@ -142,7 +142,11 @@ async def cmd_start(message: types.Message):
         "🔄 <code>/toggle</code> - Toggle between Live and Sandbox trading mode"
     )
     
-    logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "logo.png")
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    logo_path = os.path.join(root_dir, "assets", "logo.png")
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join(root_dir, "logo.png")
+
     if os.path.exists(logo_path):
         try:
             photo = FSInputFile(logo_path)
