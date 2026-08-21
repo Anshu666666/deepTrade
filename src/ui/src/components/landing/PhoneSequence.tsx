@@ -58,25 +58,40 @@ const PhoneSequence: React.FC = () => {
       const img = imagesRef.current[index];
       if (!img || !img.complete) return;
 
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      // Handle HiDPI / Retina mobile displays (DPR 2x/3x) to eliminate pixelation
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const logicalWidth = window.innerWidth;
+      const logicalHeight = window.innerHeight;
 
-      const isMobile = window.innerWidth < 768;
+      const physicalWidth = Math.round(logicalWidth * dpr);
+      const physicalHeight = Math.round(logicalHeight * dpr);
+
+      if (canvas.width !== physicalWidth || canvas.height !== physicalHeight) {
+        canvas.width = physicalWidth;
+        canvas.height = physicalHeight;
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      const isMobile = logicalWidth < 768;
 
       if (isMobile) {
-        // MOBILE: Scale the phone, shift it slightly right
-        const scale = (canvas.height * 0.5) / img.height;
+        // MOBILE: Scale the phone sharply and position in lower view
+        const scale = (logicalHeight * 0.58) / img.height;
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
-        // Shift right: center + 10% of canvas width
-        const x = (canvas.width / 2) - (drawWidth / 2) + (canvas.width * 0.08);
-        const y = canvas.height - drawHeight + (canvas.height * 0.05);
+        // Centered horizontally with subtle right bias
+        const x = (logicalWidth / 2) - (drawWidth / 2) + (logicalWidth * 0.05);
+        const y = logicalHeight - drawHeight + (logicalHeight * 0.02);
         
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, logicalWidth, logicalHeight);
         ctx.drawImage(img, x, y, drawWidth, drawHeight);
       } else {
-        // DESKTOP: Shifted right — range [82%→68%] instead of [75%→60%]
-        const scale = Math.min(canvas.width / img.width, (canvas.height * 0.9) / img.height);
+        // DESKTOP: Shifted right — range [82%→68%]
+        const scale = Math.min(logicalWidth / img.width, (logicalHeight * 0.9) / img.height);
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
         
@@ -85,12 +100,13 @@ const PhoneSequence: React.FC = () => {
         const endRatio = 0.68;
         const currentRatio = startRatio - ((startRatio - endRatio) * progress);
         
-        const x = (canvas.width * currentRatio) - (drawWidth / 2);
-        const y = (canvas.height / 2) - (drawHeight / 2);
+        const x = (logicalWidth * currentRatio) - (drawWidth / 2);
+        const y = (logicalHeight / 2) - (drawHeight / 2);
         
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, logicalWidth, logicalHeight);
         ctx.drawImage(img, x, y, drawWidth, drawHeight);
       }
+      ctx.restore();
     };
 
     // Render first frame initially
