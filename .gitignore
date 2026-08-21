@@ -9,5 +9,6 @@ scratch_*
 instruments_cache.csv
 sandbox_db.json
 *.mp4
+!src/ui/src/assets/*.mp4
 .vscode/
 .idea/
