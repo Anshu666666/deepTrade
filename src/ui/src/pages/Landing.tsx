@@ -378,7 +378,7 @@ const Landing: React.FC = () => {
         <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
           
           {/* Text Section (Right on desktop, First on mobile) */}
-          <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[44%] md:mr-6 lg:mr-14 pointer-events-auto">
+          <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[42%] lg:w-[40%] md:mr-10 lg:mr-20 pointer-events-auto">
             <h2 
               className="font-normal mb-6" 
               style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
@@ -393,8 +393,8 @@ const Landing: React.FC = () => {
             </p>
           </div>
 
-          {/* Visuals Container (Left on desktop, Second on mobile - pushed lower and slightly closer) */}
-          <div className="relative w-[90%] md:w-[45%] lg:w-[48%] md:absolute md:left-[8%] lg:left-[11%] md:top-[56%] md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
+          {/* Visuals Container (Left on desktop, Second on mobile - with generous margin from text) */}
+          <div className="relative w-[90%] md:w-[42%] lg:w-[44%] md:absolute md:left-[4%] lg:left-[6%] md:top-[64%] md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
             {/* Vault Component */}
             <div className="w-full flex items-center justify-center relative z-10">
               <VaultLock 
@@ -404,11 +404,11 @@ const Landing: React.FC = () => {
               />
             </div>
 
-            {/* iPhone Mockup - Anchored at bottom-left so it stays completely clear of the text on the right */}
+            {/* iPhone Mockup - Positioned on the RHS of the vault */}
             <img 
               src={authenticatorIphoneImg} 
               alt="Authenticator App on iPhone" 
-              className="absolute -bottom-16 -left-4 sm:-bottom-24 sm:-left-8 md:-bottom-28 md:-left-12 lg:-bottom-36 lg:-left-16 w-36 sm:w-44 md:w-64 lg:w-[380px] object-contain z-10 pointer-events-none drop-shadow-2xl"
+              className="absolute -bottom-16 -right-4 sm:-bottom-24 sm:-right-8 md:-bottom-28 md:-right-8 lg:-bottom-36 lg:-right-12 w-36 sm:w-44 md:w-64 lg:w-[380px] object-contain z-10 pointer-events-none drop-shadow-2xl"
             />
           </div>
         </div>
