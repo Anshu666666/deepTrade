@@ -151,21 +151,25 @@ const Landing: React.FC = () => {
 
       {/* Top Navigation — Glassmorphism */}
       <header
-        className="fixed top-0 left-0 w-full flex justify-between items-center box-border"
+        className="fixed top-0 left-0 w-full flex justify-between items-center box-border py-2 sm:py-3 md:py-4"
         style={{
           zIndex: 999,
-          background: 'rgba(0,0,0,0.35)',
+          background: 'rgba(0,0,0,0.45)',
           backdropFilter: 'blur(18px)',
           WebkitBackdropFilter: 'blur(18px)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
-          padding: 'clamp(10px, 1.5vh, 20px) 0',
         }}
       >
-        <div ref={headerLogoRef} className="flex items-center" style={{ paddingLeft: 'clamp(16px, 4vw, 64px)' }}>
-          <span className="text-white text-xl md:text-2xl font-semibold tracking-wider select-none">DeepTrade</span>
+        <div ref={headerLogoRef} className="flex items-center" style={{ paddingLeft: 'clamp(14px, 3.5vw, 64px)' }}>
+          <span className="text-white text-lg sm:text-xl md:text-2xl font-semibold tracking-wider select-none">DeepTrade</span>
         </div>
-        <div ref={headerBtnRef} className="flex items-center" style={{ paddingRight: 'clamp(16px, 4vw, 64px)' }}>
-          <CandyButton onClick={handleInitializeTerminal}>Initialize Terminal</CandyButton>
+        <div ref={headerBtnRef} className="flex items-center" style={{ paddingRight: 'clamp(14px, 3.5vw, 64px)' }}>
+          <CandyButton
+            onClick={handleInitializeTerminal}
+            className="text-xs sm:text-sm md:text-base px-3.5 py-1.5 sm:px-6 sm:py-2.5 md:px-8 md:py-3"
+          >
+            Initialize Terminal
+          </CandyButton>
         </div>
       </header>
 

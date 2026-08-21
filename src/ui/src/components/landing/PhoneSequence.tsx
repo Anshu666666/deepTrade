@@ -79,14 +79,14 @@ const PhoneSequence: React.FC = () => {
       const isMobile = logicalWidth < 768;
 
       if (isMobile) {
-        // MOBILE: Scale the phone so the entire device is fully visible without clipping at top/bottom
-        const scale = Math.min((logicalHeight * 0.46) / img.height, (logicalWidth * 0.95) / (img.width * 0.4));
+        // MOBILE: Scale the phone to fit the bottom area (below the text block) with clean margin
+        const scale = Math.min((logicalHeight * 0.44) / img.height, (logicalWidth * 0.92) / (img.width * 0.4));
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
         // Centered horizontally
         const x = (logicalWidth / 2) - (drawWidth / 2);
-        // Positioned neatly in the lower screen with clean bottom margin
-        const y = logicalHeight - drawHeight - 16;
+        // Positioned neatly in the lower screen with 10px bottom margin
+        const y = logicalHeight - drawHeight - 10;
         
         ctx.clearRect(0, 0, logicalWidth, logicalHeight);
         ctx.drawImage(img, x, y, drawWidth, drawHeight);
@@ -172,8 +172,8 @@ const PhoneSequence: React.FC = () => {
       {/* mix-blend-screen makes the black background of the mockup frames completely transparent! */}
       <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none mix-blend-screen" />
 
-      {/* Content block: pinned cleanly to top on mobile with room for phone below, centered on desktop */}
-      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-4 sm:top-8 md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
+      {/* Content block: starts strictly below the top header (top-[58px] on mobile), centered on desktop */}
+      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-[56px] sm:top-[70px] md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
 
         <h2
           className="font-normal mb-1 sm:mb-2 md:mb-4"
