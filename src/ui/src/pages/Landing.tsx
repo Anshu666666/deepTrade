@@ -229,8 +229,8 @@ const Landing: React.FC = () => {
       {/* SECTION 2: PHONE SEQUENCE */}
       <PhoneSequence />
 
-      {/* SECTIONS 3 & 4 WRAPPER (Triggers Keyboard) */}
-      <div ref={section3Ref} className="relative bg-black text-white z-30 mt-[-100dvh] overflow-hidden">
+      {/* SECTIONS 3, 4 & 5 WRAPPER (Triggers Keyboard) */}
+      <div ref={section3Ref} className="relative bg-black text-white z-30 mt-[-100dvh]">
         
         {/* LOGO SLIDER SECTION */}
         <div className="relative z-20 bg-black pt-32 pb-20 md:pt-20 md:pb-28 flex flex-col items-center justify-center">
@@ -375,7 +375,7 @@ const Landing: React.FC = () => {
         <div className="w-full h-48 md:h-80 lg:h-[480px] pointer-events-none" />
 
         {/* SECTION 5: SECURITY & SANDBOX */}
-        <div className="relative min-h-0 md:min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-6 md:gap-0 pt-8 md:pt-0 pb-6 md:pb-16">
+        <div className="relative min-h-0 md:min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-6 md:gap-0 pt-8 md:pt-0 pb-14 md:pb-16">
           
           {/* Text Section (Right on desktop, First on mobile) */}
           <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[42%] lg:w-[40%] md:mr-10 lg:mr-20 pointer-events-auto">
@@ -404,11 +404,11 @@ const Landing: React.FC = () => {
               />
             </div>
 
-            {/* iPhone Mockup - Positioned on the RHS of the vault */}
+            {/* iPhone Mockup - Positioned on the RHS of the vault, completely uncut */}
             <img 
               src={authenticatorIphoneImg} 
               alt="Authenticator App on iPhone" 
-              className="absolute -bottom-16 -right-4 sm:-bottom-24 sm:-right-8 md:-bottom-28 md:-right-8 lg:-bottom-36 lg:-right-12 w-36 sm:w-44 md:w-64 lg:w-[380px] object-contain z-10 pointer-events-none drop-shadow-2xl"
+              className="absolute -bottom-8 -right-2 sm:-bottom-12 sm:-right-4 md:-bottom-28 md:-right-8 lg:-bottom-36 lg:-right-12 w-36 sm:w-44 md:w-64 lg:w-[380px] object-contain z-10 pointer-events-none drop-shadow-2xl"
             />
           </div>
         </div>
@@ -427,7 +427,7 @@ const Landing: React.FC = () => {
       </div>
 
       {/* FOOTER */}
-      <div className="relative min-h-[40dvh] md:min-h-[50dvh] w-full z-30" style={{ height: 'clamp(320px, 50dvh, 650px)' }}>
+      <div className="relative min-h-[360px] md:min-h-[50dvh] w-full z-30 -mt-6 md:mt-0" style={{ height: 'clamp(360px, 50dvh, 650px)' }}>
         <AnimatedFooter
           headingLines={["Think. Analyse. Trade."]}
           leftImage="/footer-left.jpg"

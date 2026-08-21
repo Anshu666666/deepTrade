@@ -359,8 +359,8 @@ export function AnimatedFooter({
       className={cn("relative h-full w-full overflow-hidden", className)}
       style={{ backgroundColor: background, color: textColor, containerType: "inline-size" }}
     >
-      {/* ASCII hands — positioned in lower-center, not true center */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-[12%] top-0 flex items-end justify-between">
+      {/* ASCII hands — positioned higher on mobile */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-[22%] md:bottom-[12%] top-0 flex items-end justify-between">
         <div
           ref={leftWrapRef}
           className="relative w-[52%] min-w-[140px] will-change-transform"
