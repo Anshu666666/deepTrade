@@ -248,9 +248,15 @@ const Landing: React.FC = () => {
           <div className="absolute top-0 left-0 w-full h-[30dvh] bg-gradient-to-b from-black via-black/80 to-transparent z-10 pointer-events-none" />
           {/* Video & MacBook Container */}
           <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:left-[8%] lg:left-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center">
-            {/* Video Placeholder */}
-            <div className="w-full aspect-video bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
-              <span className="text-zinc-500 font-mono text-sm md:text-base tracking-widest uppercase text-center px-4">Video Placeholder</span>
+            {/* YouTube Demo Video */}
+            <div className="w-full aspect-video bg-zinc-900/80 border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/WCs9sa--8Qc?rel=0&modestbranding=1"
+                title="DeepTrade Demo Video"
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
             </div>
 
             {/* MacBook Mockup */}

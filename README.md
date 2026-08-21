@@ -12,6 +12,10 @@
 
 *Perform deep fundamental & web equity research and manage your Upstox account (orders, positions, holdings, funds) directly from Telegram using natural language — without ever opening the Upstox app.*
 
+<br/>
+
+[![Watch DeepTrade Demo](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=WCs9sa--8Qc)
+
 </div>
 
 ---
