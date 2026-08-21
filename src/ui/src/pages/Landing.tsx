@@ -362,8 +362,8 @@ const Landing: React.FC = () => {
               </p>
             </div>
 
-            {/* Globe Container - Positioned beside the text centered vertically */}
-            <div className="absolute top-1/2 -translate-y-1/2 -right-12 md:-right-36 lg:-right-56 w-56 md:w-[400px] lg:w-[520px] z-[-1] pointer-events-auto opacity-75">
+            {/* Globe Container - Positioned a bit lower and further right relative to the text */}
+            <div className="absolute top-[60%] -translate-y-1/2 -right-20 md:-right-48 lg:-right-80 w-56 md:w-[420px] lg:w-[560px] z-[-1] pointer-events-auto opacity-75">
               <GlobeAnalytics />
             </div>
 
