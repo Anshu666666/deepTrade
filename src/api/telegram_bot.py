@@ -6,7 +6,7 @@ import sys
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command, CommandObject
 from aiogram.enums import ParseMode
-from aiogram.types import BufferedInputFile, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import BufferedInputFile, FSInputFile, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.client.default import DefaultBotProperties
 from langchain_core.messages import HumanMessage
 from fastapi import Request, BackgroundTasks
@@ -130,15 +130,28 @@ async def cmd_toggle(message: types.Message, command: CommandObject):
 async def cmd_start(message: types.Message):
     chat_id = str(message.chat.id)
     await db.get_or_create_telegram_thread(chat_id)
-    await message.answer(
-        "👋 Welcome to DeepTrade!\n\n"
+    
+    welcome_text = (
+        "👋 <b>Welcome to DeepTrade!</b>\n\n"
         "Send me a stock ticker or a financial query to begin.\n"
         "Use /new to clear my memory and start a fresh conversation.\n\n"
         "<b>Available Commands:</b>\n"
         "📊 <code>/analyse &lt;ticker&gt;</code> - Perform a comprehensive financial analysis\n"
         "📰 <code>/news &lt;topic&gt;</code> - Fetch and summarize the latest news\n"
-        "🔍 <code>/deepdive &lt;topic&gt;</code> - Conduct an in-depth research report"
+        "🔍 <code>/deepdive &lt;topic&gt;</code> - Conduct an in-depth research report\n"
+        "🔄 <code>/toggle</code> - Toggle between Live and Sandbox trading mode"
     )
+    
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "logo.png")
+    if os.path.exists(logo_path):
+        try:
+            photo = FSInputFile(logo_path)
+            await message.answer_photo(photo=photo, caption=welcome_text, parse_mode=ParseMode.HTML)
+            return
+        except Exception as e:
+            logger.error(f"Failed to send logo photo with start command: {e}")
+
+    await message.answer(welcome_text, parse_mode=ParseMode.HTML)
 
 @dp.message(Command("analyse"))
 async def cmd_analyse(message: types.Message, command: CommandObject):
