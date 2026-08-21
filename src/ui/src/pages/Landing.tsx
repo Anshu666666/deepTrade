@@ -204,7 +204,10 @@ const Landing: React.FC = () => {
           <MorphText texts={['intelligence.', 'markets.', 'execution.']} />
         </h1>
 
-        <p className="text-zinc-400 text-sm sm:text-base md:text-lg max-w-[580px] text-center mt-5 mb-10 md:mb-12 leading-snug tracking-wide">
+        <p 
+          className="text-zinc-200 text-sm sm:text-base md:text-lg max-w-[620px] text-center mt-5 mb-10 md:mb-12 leading-relaxed tracking-wide font-normal"
+          style={{ textShadow: '0 2px 14px rgba(0,0,0,1), 0 4px 28px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1)' }}
+        >
           DeepTrade is a conversational financial research and broker execution assistant for individual traders — one AI that analyzes markets, synthesizes filings and news, and executes confirmed orders on your Upstox account directly from chat.
         </p>
 
