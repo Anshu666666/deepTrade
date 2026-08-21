@@ -146,7 +146,7 @@ const Landing: React.FC = () => {
       </header>
 
       {/* SECTION 1: HERO */}
-      <div ref={heroRef} className="relative h-[100dvh] overflow-hidden text-white bg-black z-50" style={{ fontFamily: '"SF Pro Display", sans-serif' }}>
+      <div ref={heroRef} className="relative h-[100dvh] overflow-hidden text-white bg-black z-50" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif' }}>
       {/* Background Video */}
       <video
         ref={videoRef}
@@ -171,7 +171,7 @@ const Landing: React.FC = () => {
           <MorphText texts={['intelligence.', 'markets.', 'execution.']} />
         </h1>
 
-        <p className="text-[#e2e2e8] text-sm sm:text-base md:text-lg max-w-[580px] text-center mt-5 mb-10 md:mb-12 leading-snug tracking-wide" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,1)' }}>
+        <p className="text-zinc-400 text-sm sm:text-base md:text-lg max-w-[580px] text-center mt-5 mb-10 md:mb-12 leading-snug tracking-wide" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.95), 0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,1)' }}>
           DeepTrade is a conversational financial research and broker execution assistant for individual traders — one AI that analyzes markets, synthesizes filings and news, and executes confirmed orders on your Upstox account directly from chat.
         </p>
 
@@ -253,7 +253,7 @@ const Landing: React.FC = () => {
               <iframe
                 src="https://www.youtube-nocookie.com/embed/WCs9sa--8Qc?rel=0&modestbranding=1&playsinline=1"
                 title="DeepTrade Demo Video"
-                className="w-full h-full border-0 scale-[1.12] md:scale-[1.15] transform origin-center transition-transform"
+                className="w-full h-full border-0 rounded-xl"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
