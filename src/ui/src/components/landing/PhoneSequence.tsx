@@ -81,17 +81,17 @@ const PhoneSequence: React.FC = () => {
       const isMobile = logicalWidth < 768;
 
       if (isMobile) {
-        // Item 1: Centered vertically in the space below the header and text card with balanced margin
-        const textBlockBottom = 320; // bottom of text + system commands card when top-[92px] is applied
-        const availableHeight = Math.max(logicalHeight - textBlockBottom - 16, 200);
-        const baseScale = Math.min((availableHeight * 0.88) / img.height, (logicalWidth * 0.94) / (img.width * 0.42));
+        // MOBILE: Centered horizontally and vertically with generous top and bottom margins
+        const textBlockBottom = 365; // bottom of centered text + commands card when top-28 is applied
+        const availableHeight = Math.max(logicalHeight - textBlockBottom - 20, 200);
+        const baseScale = Math.min((availableHeight * 0.90) / img.height, (logicalWidth * 0.94) / (img.width * 0.42));
         const scale = baseScale * zoomFactor;
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
         
         // Centered horizontally
         const x = (logicalWidth / 2) - (drawWidth / 2);
-        // Centered vertically in the lower available viewport area
+        // Centered vertically in the available lower viewport
         const y = textBlockBottom + (availableHeight / 2) - (drawHeight / 2);
         
         ctx.clearRect(0, 0, logicalWidth, logicalHeight);
@@ -185,12 +185,12 @@ const PhoneSequence: React.FC = () => {
       {/* mix-blend-screen makes the black background of the mockup frames completely transparent! */}
       <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none mix-blend-screen" />
 
-      {/* Content block: positioned safely below header with top-[92px] on mobile */}
-      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-[92px] sm:top-[100px] md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
+      {/* Content block: centered on mobile with generous top-28 margin, left-aligned on desktop */}
+      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-28 sm:top-32 md:top-0 bottom-auto md:bottom-0 box-border flex flex-col items-center md:items-start text-center md:text-left justify-start md:justify-center">
 
         <h2
           className="font-normal mb-1 sm:mb-2 md:mb-4"
-          style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.4rem, 3.2vw, 3.8rem)', textShadow: '0 4px 20px rgba(0,0,0,0.8)' }}
+          style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.5rem, 3.2vw, 3.8rem)', textShadow: '0 4px 20px rgba(0,0,0,0.8)' }}
         >
           <FlipText delay={0.2} together={false} duration={10}>Trade Anywhere.</FlipText>
         </h2>
@@ -218,7 +218,7 @@ const PhoneSequence: React.FC = () => {
         </div>
 
         {/* Compact SYSTEM_COMMANDS terminal box */}
-        <div className="bg-[#0a0a0a]/90 p-2 sm:p-3 md:p-6 border border-zinc-800/80 rounded-lg sm:rounded-xl font-mono text-[10px] sm:text-xs md:text-sm text-zinc-400 space-y-1 sm:space-y-2 backdrop-blur-md w-full max-w-full sm:max-w-[420px] shadow-2xl">
+        <div className="bg-[#0a0a0a]/90 p-2 sm:p-3 md:p-6 border border-zinc-800/80 rounded-lg sm:rounded-xl font-mono text-[10px] sm:text-xs md:text-sm text-zinc-400 space-y-1 sm:space-y-2 backdrop-blur-md w-full max-w-full sm:max-w-[420px] shadow-2xl text-left">
             <div className="text-white mb-0.5 sm:mb-1 relative inline-block text-[10px] sm:text-xs">
               <span className="relative z-10 font-semibold tracking-wide ascii-glitch" data-text="~ % SYSTEM_COMMANDS">~ % SYSTEM_COMMANDS</span>
             </div>
