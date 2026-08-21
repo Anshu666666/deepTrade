@@ -155,20 +155,11 @@ export const LaunchModal: React.FC<LaunchModalProps> = ({
               </a>
             </div>
 
-            {/* Footer / Direct Local Login Link */}
-            <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between text-xs text-zinc-500 relative z-10">
-              <span className="text-zinc-400 flex items-center gap-1">
-                <Terminal className="w-3.5 h-3.5 text-[#54A1FD]" /> Open Source · MIT
+            {/* Footer */}
+            <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-center text-xs text-zinc-500 relative z-10">
+              <span className="text-zinc-400 flex items-center gap-1.5">
+                <Terminal className="w-3.5 h-3.5 text-[#54A1FD]" /> DeepTrade Autonomous Financial Analyst · MIT License
               </span>
-              <button
-                onClick={() => {
-                  onClose();
-                  navigate('/login');
-                }}
-                className="text-[#54A1FD] hover:underline font-medium"
-              >
-                Running locally? Login to Terminal →
-              </button>
             </div>
           </motion.div>
         </div>

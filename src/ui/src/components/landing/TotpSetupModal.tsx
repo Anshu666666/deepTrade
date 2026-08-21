@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, X, Copy, Check, RefreshCw, Key, QrCode, Smartphone, ExternalLink } from 'lucide-react';
 import CandyButton from '../ui/candy-button';
+import QRCode from 'qrcode';
 
 interface TotpSetupModalProps {
   isOpen: boolean;
@@ -11,17 +12,45 @@ interface TotpSetupModalProps {
 interface TotpData {
   secret: string;
   provisioning_uri: string;
-  qr_code: string;
+  qr_code?: string;
   current_code?: string;
 }
 
+// Generate random Base32 secret for demo/client-side fallback
+const generateClientBase32 = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let str = '';
+  for (let i = 0; i < 32; i++) {
+    str += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return str;
+};
+
 export const TotpSetupModal: React.FC<TotpSetupModalProps> = ({ isOpen, onClose }) => {
   const [data, setData] = useState<TotpData | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedUri, setCopiedUri] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(30);
+
+  const updateQrImage = async (uri: string) => {
+    try {
+      const url = await QRCode.toDataURL(uri, {
+        margin: 1,
+        width: 320,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'M'
+      });
+      setQrDataUrl(url);
+    } catch (e) {
+      console.error("Failed to generate QR Code image:", e);
+    }
+  };
 
   const fetchTotpSetup = async () => {
     setLoading(true);
@@ -30,23 +59,30 @@ export const TotpSetupModal: React.FC<TotpSetupModalProps> = ({ isOpen, onClose 
       if (res.ok) {
         const json = await res.json();
         setData(json);
+        if (json.qr_code) {
+          setQrDataUrl(json.qr_code);
+        } else if (json.provisioning_uri) {
+          await updateQrImage(json.provisioning_uri);
+        }
       } else {
-        // Fallback for static promo or offline demo
+        // Fallback for promo mode / static Vercel
+        const fallbackSecret = generateClientBase32();
+        const fallbackUri = `otpauth://totp/DeepTrade:admin@deeptrade.ai?secret=${fallbackSecret}&issuer=DeepTrade`;
         setData({
-          secret: 'DEEPTRADE2FASECRETKEYSAMPLE',
-          provisioning_uri: 'otpauth://totp/DeepTrade:admin@deeptrade.ai?secret=DEEPTRADE2FASECRETKEYSAMPLE&issuer=DeepTrade',
-          qr_code: '',
-          current_code: '849201'
+          secret: fallbackSecret,
+          provisioning_uri: fallbackUri,
         });
+        await updateQrImage(fallbackUri);
       }
     } catch {
-      // Offline fallback
+      // Offline fallback for static Vercel showcase
+      const fallbackSecret = generateClientBase32();
+      const fallbackUri = `otpauth://totp/DeepTrade:admin@deeptrade.ai?secret=${fallbackSecret}&issuer=DeepTrade`;
       setData({
-        secret: 'DEEPTRADE2FASECRETKEYSAMPLE',
-        provisioning_uri: 'otpauth://totp/DeepTrade:admin@deeptrade.ai?secret=DEEPTRADE2FASECRETKEYSAMPLE&issuer=DeepTrade',
-        qr_code: '',
-        current_code: '849201'
+        secret: fallbackSecret,
+        provisioning_uri: fallbackUri,
       });
+      await updateQrImage(fallbackUri);
     } finally {
       setLoading(false);
     }
@@ -62,9 +98,29 @@ export const TotpSetupModal: React.FC<TotpSetupModalProps> = ({ isOpen, onClose 
       if (res.ok) {
         const json = await res.json();
         setData(json);
+        if (json.qr_code) {
+          setQrDataUrl(json.qr_code);
+        } else if (json.provisioning_uri) {
+          await updateQrImage(json.provisioning_uri);
+        }
+      } else {
+        const newSecret = generateClientBase32();
+        const newUri = `otpauth://totp/DeepTrade:admin@deeptrade.ai?secret=${newSecret}&issuer=DeepTrade`;
+        setData({
+          secret: newSecret,
+          provisioning_uri: newUri,
+        });
+        await updateQrImage(newUri);
       }
     } catch (e) {
-      console.error("Failed to reset TOTP:", e);
+      console.error("Failed to reset TOTP via server, using client generator:", e);
+      const newSecret = generateClientBase32();
+      const newUri = `otpauth://totp/DeepTrade:admin@deeptrade.ai?secret=${newSecret}&issuer=DeepTrade`;
+      setData({
+        secret: newSecret,
+        provisioning_uri: newUri,
+      });
+      await updateQrImage(newUri);
     } finally {
       setResetting(false);
     }
@@ -155,15 +211,15 @@ export const TotpSetupModal: React.FC<TotpSetupModalProps> = ({ isOpen, onClose 
             <div className="py-4 space-y-4 relative z-10">
               {/* QR Code Card */}
               <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-xl bg-white p-2 flex items-center justify-center shrink-0 shadow-lg border border-zinc-200">
+                <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-xl bg-white p-2.5 flex items-center justify-center shrink-0 shadow-lg border border-zinc-200">
                   {loading ? (
                     <div className="flex flex-col items-center gap-2 text-zinc-500 text-xs">
                       <RefreshCw className="w-6 h-6 animate-spin text-zinc-600" />
                       <span>Generating QR...</span>
                     </div>
-                  ) : data?.qr_code ? (
+                  ) : qrDataUrl ? (
                     <img
-                      src={data.qr_code}
+                      src={qrDataUrl}
                       alt="TOTP 2FA QR Code"
                       className="w-full h-full object-contain"
                     />
@@ -175,7 +231,7 @@ export const TotpSetupModal: React.FC<TotpSetupModalProps> = ({ isOpen, onClose 
                   )}
                 </div>
 
-                <div className="flex flex-col justify-between self-stretch text-xs space-y-2.5">
+                <div className="flex flex-col justify-between self-stretch text-xs space-y-2.5 flex-1">
                   <div>
                     <span className="text-zinc-400 text-[11px] font-medium block mb-1">
                       Manual Secret Key
@@ -183,7 +239,7 @@ export const TotpSetupModal: React.FC<TotpSetupModalProps> = ({ isOpen, onClose 
                     <div className="flex items-center gap-1.5 bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 font-mono text-[11px] text-[#54A1FD] break-all">
                       <Key className="w-3 h-3 text-zinc-500 shrink-0" />
                       <span className="select-all tracking-wider font-semibold">
-                        {data?.secret || 'Loading...'}
+                        {data?.secret || 'Generating...'}
                       </span>
                     </div>
                   </div>
@@ -217,7 +273,7 @@ export const TotpSetupModal: React.FC<TotpSetupModalProps> = ({ isOpen, onClose 
               {/* Instructions Pill */}
               <div className="text-[11.5px] text-zinc-400 leading-relaxed bg-white/[0.02] border border-white/5 rounded-xl p-3">
                 <p className="m-0">
-                  1. Open <b>Google Authenticator</b> or your password manager on your phone.<br />
+                  1. Open <b>Google Authenticator</b>, <b>Apple Passwords</b>, or <b>1Password</b> on your phone.<br />
                   2. Tap <b>+</b> and scan the QR code above.<br />
                   3. Enter the 6-digit code on the login page to authenticate.
                 </p>
