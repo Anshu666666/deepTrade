@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
 type VaultLockProps = {
@@ -197,9 +197,11 @@ const VaultLock = ({
           ))}
         </div>
       </motion.div>
-      <div className="absolute bottom-4 left-0 w-full px-3">
-        <h3 className="text-sm font-semibold text-white">{cardTitle}</h3>
-        <p className="mt-2 text-xs text-neutral-400">{cardDescription}</p>
+      <div className="absolute bottom-4 left-0 w-full px-4 z-30 pointer-events-auto">
+        <div className="max-w-[58%] sm:max-w-[64%]">
+          <h3 className="text-sm font-semibold text-white">{cardTitle}</h3>
+          <p className="mt-1.5 text-xs text-neutral-400 leading-relaxed">{cardDescription}</p>
+        </div>
       </div>
     </motion.div>
   );

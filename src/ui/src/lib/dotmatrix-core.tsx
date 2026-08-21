@@ -3,8 +3,7 @@
 import type { CSSProperties } from "react";
 
 import "@/components/dotmatrix-loader.css";
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useDotMatrixPhases, usePrefersReducedMotion, useCyclePhase } from "@/lib/dotmatrix-hooks";
 
 export type MatrixPattern = "diamond" | "full" | "outline" | "rose" | "cross" | "rings";
@@ -1647,4 +1646,15 @@ export function createGlyphSpin3Component(
   GlyphSpin3Component.displayName = displayName;
   return GlyphSpin3Component;
 }
+
+export function snakePath3OrderValue(index: number): number {
+  const row = Math.floor(index / 3);
+  const col = index % 3;
+  return row % 2 === 0 ? row * 3 + col : row * 3 + (2 - col);
+}
+
+export function snakePath3NormFromIndex(index: number): number {
+  return snakePath3OrderValue(index) / 8;
+}
+
 

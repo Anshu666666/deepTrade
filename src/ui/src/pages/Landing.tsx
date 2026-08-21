@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import videoSrc from '../assets/upscaled-video.mp4';
 import MorphText from '../components/landing/MorphText';
 import CandyButton from '../components/ui/candy-button';
@@ -24,6 +24,7 @@ import logoExa from '../assets/logos/logo-exa.png';
 import logoValyu from '../assets/logos/logo-valyu.png';
 import VaultLock from '../components/forgeui/vault-lock';
 import authenticatorIphoneImg from '../assets/authenticator-iphone.png';
+import LaunchModal from '../components/landing/LaunchModal';
 
 const Landing: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,6 +33,18 @@ const Landing: React.FC = () => {
   const keyboardRef = useRef<HTMLDivElement>(null);
   const headerLogoRef = useRef<HTMLDivElement>(null);
   const headerBtnRef = useRef<HTMLDivElement>(null);
+
+  const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleInitializeTerminal = () => {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal) {
+      navigate('/login');
+    } else {
+      setIsLaunchModalOpen(true);
+    }
+  };
 
   // GSAP Smooth Scroll Setup
   useEffect(() => {
@@ -99,6 +112,12 @@ const Landing: React.FC = () => {
   return (
     <div className="relative bg-black font-sans min-h-screen">
       
+      {/* Launch Modal for Public / Vercel visitors */}
+      <LaunchModal
+        isOpen={isLaunchModalOpen}
+        onClose={() => setIsLaunchModalOpen(false)}
+      />
+
       {/* Global Stars Background (Above Phone, Below Section 1) */}
       <div className="fixed inset-0 z-40 pointer-events-none mix-blend-screen">
         <StarsBackground starColor="#ffffff" speed={30} className="opacity-60" />
@@ -120,9 +139,7 @@ const Landing: React.FC = () => {
           <span className="text-white text-xl md:text-2xl font-semibold tracking-wider select-none">DeepTrade</span>
         </div>
         <div ref={headerBtnRef} className="flex items-center" style={{ paddingRight: 'clamp(16px, 4vw, 64px)' }}>
-          <Link to="/login" className="no-underline">
-            <CandyButton>Initialize Terminal</CandyButton>
-          </Link>
+          <CandyButton onClick={handleInitializeTerminal}>Initialize Terminal</CandyButton>
         </div>
       </header>
 
@@ -152,8 +169,8 @@ const Landing: React.FC = () => {
           <MorphText texts={['intelligence.', 'markets.', 'execution.']} />
         </h1>
 
-        <p className="text-zinc-200 text-lg md:text-xl max-w-[600px] text-center mt-6 mb-10 md:mb-12 leading-tight tracking-wide" style={{ textShadow: '0 4px 25px rgba(0,0,0,0.8), 0 2px 12px rgba(0,0,0,0.6)' }}>
-          DeepTrade is an intelligent trading bot for individual investors — one AI that researches markets, reasons in the open, and executes real trades on your Upstox account only when you say so.
+        <p className="text-zinc-200 text-lg md:text-xl max-w-[650px] text-center mt-6 mb-10 md:mb-12 leading-tight tracking-wide" style={{ textShadow: '0 4px 25px rgba(0,0,0,0.8), 0 2px 12px rgba(0,0,0,0.6)' }}>
+          DeepTrade is a conversational financial research and broker execution assistant for individual traders — one AI that analyzes markets, synthesizes filings and news, and executes confirmed orders on your Upstox account directly from chat.
         </p>
 
       </div>
@@ -257,13 +274,6 @@ const Landing: React.FC = () => {
         </div>
 
         {/* SECTION 4: OPEN BY DESIGN */}
-        {/* ─── Tuning knobs — change these to adjust spacing ─────────────────
-              --s4-label-gap      : gap below the "OPEN SOURCE · …" label row
-              --s4-heading-gap    : gap below the h2 heading
-              --s4-para-gap       : vertical gap between the two paragraphs
-              --s4-line-height    : line-height of body paragraphs
-              --s4-label-tracking : letter-spacing of the label row
-        ──────────────────────────────────────────────────────────────────── */}
         <div
           className="relative min-h-[100dvh] flex flex-col items-center justify-center px-8 md:px-12 lg:px-24 text-center"
           style={{
@@ -322,13 +332,11 @@ const Landing: React.FC = () => {
           </div>
         </div>
 
-        {/* END SECTION 4 */}
-
         {/* SECTION 5: SECURITY & SANDBOX */}
-        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-32 md:gap-0 pt-16 md:pt-0 pb-16">
+        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
           
-          {/* Text Section (Left) */}
-          <div className="max-w-xl w-full text-center md:text-left z-10 relative md:w-[45%] md:ml-12 lg:ml-24">
+          {/* Text Section (Left) - Enhanced with z-30 pointer-events-auto */}
+          <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[45%] md:ml-12 lg:ml-24 pointer-events-auto">
             <h2 
               className="font-normal mb-6" 
               style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
@@ -339,12 +347,12 @@ const Landing: React.FC = () => {
               Trade with confidence. DeepTrade is guarded by a rigorous 7-day Time-Based One-Time Password (TOTP) cycle, ensuring your active session remains yours alone.
             </p>
             <p className="text-zinc-400 text-lg leading-snug md:text-xl">
-              Not ready to risk capital? Engage the Sandbox Mock Registry. The agent simulates real market executions with a virtual portfolio, letting you pressure-test strategies with zero financial exposure.
+              Not ready to risk capital? Engage the Sandbox Mock Registry. The agent simulates real market executions with a virtual portfolio, letting you practice research and order execution with ₹10,00,000 in virtual funds and zero financial exposure.
             </p>
           </div>
 
-          {/* Visuals Container (Right) */}
-          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:right-[8%] lg:right-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-12 md:mt-0">
+          {/* Visuals Container (Right) - z-10 */}
+          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:right-[8%] lg:right-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-12 md:mt-0 pointer-events-none sm:pointer-events-auto">
             {/* Vault Component */}
             <div className="w-full flex items-center justify-center relative z-10">
               <VaultLock 
@@ -354,11 +362,11 @@ const Landing: React.FC = () => {
               />
             </div>
 
-            {/* iPhone Mockup (Acts as the MacBook equivalent) */}
+            {/* iPhone Mockup */}
             <img 
               src={authenticatorIphoneImg} 
               alt="Authenticator App on iPhone" 
-              className="absolute -bottom-28 -right-8 md:-bottom-32 md:-right-24 lg:-bottom-48 lg:-right-32 w-44 md:w-64 lg:w-[400px] object-contain z-20 pointer-events-none drop-shadow-2xl"
+              className="absolute -bottom-28 -right-8 md:-bottom-32 md:-right-24 lg:-bottom-48 lg:-right-32 w-44 md:w-64 lg:w-[400px] object-contain z-10 pointer-events-none drop-shadow-2xl"
             />
           </div>
         </div>

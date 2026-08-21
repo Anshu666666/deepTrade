@@ -37,10 +37,7 @@ const LOADERS = [
 
 function App() {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [authCode, setAuthCode] = useState('');
-  const [authError, setAuthError] = useState('');
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -74,7 +71,6 @@ function App() {
       const res = await fetch('http://localhost:8000/api/auth/status', { credentials: 'include' });
       const data = await res.json();
       if (data.authenticated) {
-        setIsAuthenticated(true);
         fetchThreads();
       } else {
         navigate('/login');

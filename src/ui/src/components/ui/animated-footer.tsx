@@ -1,5 +1,4 @@
 // Ported from VengeanceUI animated-footer — next-themes removed (always dark).
-import * as React from "react";
 import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 import { cn } from "@/lib/utils";

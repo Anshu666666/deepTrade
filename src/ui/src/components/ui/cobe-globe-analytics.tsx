@@ -159,8 +159,7 @@ export function GlobeAnalytics({
           key={m.id}
           style={{
             position: "absolute",
-            // @ts-expect-error CSS Anchor Positioning
-            positionAnchor: `--cobe-${m.id}`,
+            ["positionAnchor" as any]: `--cobe-${m.id}`,
             bottom: "anchor(top)",
             left: "anchor(center)",
             translate: "-50% 0",
