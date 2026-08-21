@@ -1,11 +1,11 @@
-# Upstox Integration & Trading Subagent Reference
+# Upstox Integration & Trading Skill Reference
 
 ```mermaid
 flowchart TB
-    subgraph MultiAgentEngine["LangGraph Multi-Agent Engine"]
-        SUPERVISOR["🧠 Supervisor Agent"]
-        MRA["📊 MarketResearchAgent"]
-        TEX["⚡ TradeExecutor"]
+    subgraph AgentEngine["DeepTrade Agent (Supervisor)"]
+        AGENT["🧠 Supervisor DeepAgent<br/>(Equipped with All Tools)"]
+        SKILL["📁 Progressive Upstox Skill<br/>(/skills/upstox/SKILL.md)"]
+        AGENT <--> SKILL
     end
 
     subgraph ToolSuite["Upstox Tool Suite (src/agent/upstox_tools.py)"]
@@ -19,11 +19,9 @@ flowchart TB
         SANDBOX_PATH["🧪 Sandbox Mode: Mock Virtual Ledger<br/>(sandbox_db.json • ₹10,00,000 Fund)"]
     end
 
-    SUPERVISOR --> MRA
-    SUPERVISOR --> TEX
-    MRA --> TOOL_QUOTE
-    TEX --> TOOL_ORDER
-    TEX --> TOOL_PORTFOLIO
+    AGENT --> TOOL_QUOTE
+    AGENT --> TOOL_ORDER
+    AGENT --> TOOL_PORTFOLIO
 
     TOOL_ORDER -->|Live Mode + User Confirmed| LIVE_PATH
     TOOL_ORDER -->|Sandbox Mode + User Confirmed| SANDBOX_PATH
@@ -33,14 +31,13 @@ flowchart TB
 
 ---
 
-## 1. Multi-Agent Architecture
+## 1. DeepAgent & Skills Architecture
 
-The system utilizes a hierarchical Supervisor-Subagent architecture defined in `src/agent/graph.py`.
+DeepTrade uses a **Single DeepAgent Architecture** (`Supervisor`) powered by DeepAgents and LangGraph.
 
-### `Supervisor`
-- **Purpose**: The primary conversational agent interacting directly with the user. It evaluates intent, coordinates research with the `MarketResearchAgent`, and delegates order tasks to the `TradeExecutor`.
-- **Workflow**: If a user asks for stock research, it delegates to the research subagent. If the user asks to buy a stock or check their portfolio, it directly utilizes or delegates to execution tools.
-- **Safety**: Never places an unconfirmed order. Halts and awaits interactive confirmation via Telegram inline buttons.
+- **Unified Tool Access**: The Supervisor has direct access to all search and trading tools.
+- **Progressive Skill Loading**: The agent dynamically references `/skills/upstox/SKILL.md` to load critical rules regarding instrument key resolution, risk constraints, and interactive confirmation workflows.
+- **Safety Enforcement**: The agent never executes live orders blindly. It initiates the pending order state and waits for human confirmation via Telegram inline buttons.
 
 ---
 
@@ -94,13 +91,13 @@ All trading tools are defined in `src/agent/upstox_tools.py`:
 ```mermaid
 sequenceDiagram
     autonumber
-    participant LLM as 🧠 LangGraph Agent
+    participant Agent as 🧠 DeepTrade Agent
     participant Tool as ⚡ upstox_place_order
     participant TG as 📱 Telegram Bot
     actor Trader as 👤 User
     participant Upstox as 🏦 Upstox v3 API
 
-    LLM->>Tool: Call upstox_place_order(symbol="TCS", qty=1, price=3850)
+    Agent->>Tool: Call upstox_place_order(symbol="TCS", qty=1, price=3850)
     Tool->>Tool: Create UUID confirmation_id & asyncio.Future
     Tool->>TG: Send Inline Keyboard: [✅ Confirm] [❌ Cancel]
     Tool->>Tool: await asyncio.wait_for(future, timeout=300)
@@ -110,13 +107,13 @@ sequenceDiagram
         TG->>Tool: CallbackQuery -> future.set_result("confirm")
         Tool->>Upstox: PlaceOrderV3Request(...)
         Upstox-->>Tool: 200 OK (order_id: 2608210099)
-        Tool-->>LLM: "Order successful! Upstox Response: ..."
-        LLM-->>Trader: "Order placed successfully for 1 share of TCS at ₹3850."
+        Tool-->>Agent: "Order successful! Upstox Response: ..."
+        Agent-->>Trader: "Order placed successfully for 1 share of TCS at ₹3850."
     else User clicks [❌ Cancel]
         Trader->>TG: Clicks [❌ Cancel]
         TG->>Tool: CallbackQuery -> future.set_result("cancel")
-        Tool-->>LLM: "User cancelled the order."
-        LLM-->>Trader: "Order was cancelled as requested."
+        Tool-->>Agent: "User cancelled the order."
+        Agent-->>Trader: "Order was cancelled as requested."
     end
 ```
 

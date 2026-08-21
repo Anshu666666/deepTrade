@@ -5,7 +5,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-orange.svg)](https://github.com/langchain-ai/langgraph)
+[![DeepAgents](https://img.shields.io/badge/DeepAgents-Agentic%20Skills-orange.svg)](https://github.com/langchain-ai/deepagents)
 [![Broker](https://img.shields.io/badge/Broker-Upstox%20v3-red.svg)](https://upstox.com/developer/api-documentation/)
 [![Interface](https://img.shields.io/badge/Interface-Telegram%20Bot-2CA5E0.svg)](https://core.telegram.org/bots)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
@@ -31,10 +31,12 @@ flowchart TB
         BG["⚙️ FastAPI BackgroundTasks & SSE Queue"]
     end
 
-    subgraph AgentSystem["LangGraph Multi-Agent Engine"]
-        SUP["🧠 Supervisor Agent<br/>(OpenRouter / poolside / nemotron)"]
-        MRA["📊 Market Research Agent<br/>(Valyu SEC Filings + Exa Web)"]
-        TEX["⚡ Trade Executor<br/>(Upstox Interactive Tools)"]
+    subgraph AgentSystem["DeepAgent Engine (src/agent/graph.py)"]
+        SUP["🧠 DeepTrade Agent (Supervisor)<br/>(OpenRouter / poolside / nemotron)"]
+        SKILLS["📁 Progressive Skills System<br/>(/skills/upstox/SKILL.md)"]
+        TOOLS["⚡ Unified Tool Suite<br/>• Upstox Market Data & Orders<br/>• Exa Web Search<br/>• Valyu SEC & Financial Data"]
+        SUP <--> SKILLS
+        SUP --> TOOLS
     end
 
     subgraph Persistence["Storage & Broker Services"]
@@ -48,12 +50,9 @@ flowchart TB
     AUTH --> PRECHECK
     PRECHECK --> BG
     BG --> SUP
-    SUP -->|Task Delegation| MRA
-    SUP -->|Task Delegation| TEX
     SUP -.->|Checkpoint & Memory| PG
-    MRA -->|Search & Filings| BrokerData["🌐 Exa / Valyu Financial APIs"]
-    TEX -->|Live Mode| BROKER
-    TEX -->|Sandbox Mode| MOCK
+    TOOLS -->|Live Market & Orders| BROKER
+    TOOLS -->|Sandbox Mode| MOCK
 ```
 
 ---
@@ -64,7 +63,7 @@ flowchart TB
 - **🛡️ Interactive Two-Step Order Confirmations**: Prevents unintended orders. Generates native Telegram Inline Keyboard Buttons (`[✅ Confirm]` / `[❌ Cancel]`) with an automated 5-minute timeout.
 - **⚡ Deterministic Pre-Flight IP & Token Verification**: Proactively verifies that your Upstox access token is active and your network's public IP matches Upstox's whitelisted static IP *before* sending prompts to the LLM, eliminating wasted tokens and unexpected API errors.
 - **🔄 Auto-Syncing Dynamic IP Whitelisting**: Automatically detects changes in your local ISP's IPv4/IPv6 addresses and programmatically updates Upstox static IP settings via API.
-- **🧠 Multi-Agent Deep Research**: Leverages LangGraph subagents to fetch live quotes (Upstox LTP/OHLC), SEC filings (Valyu), and real-time financial news (Exa) to synthesize structured markdown reports.
+- **🧠 Deep Financial Research**: Direct tool integrations to fetch live quotes (Upstox LTP/OHLC), SEC filings (Valyu), and real-time financial news (Exa) to synthesize structured markdown reports.
 - **🧪 Hybrid Live vs. Simulated Sandbox Mode**: Toggle seamlessly between `/live` and `/sandbox`. In Sandbox mode, DeepTrade runs a local ₹1,000,000 virtual ledger (`sandbox_db.json`) while pulling real-time market prices.
 - **🔒 Hardened Single-User Security Lock**: Locks permanently to the first Telegram user who messages it (`chat_id`), immediately rejecting all unauthorized external interactions.
 
@@ -77,25 +76,25 @@ sequenceDiagram
     autonumber
     actor User as 👤 Trader (Telegram)
     participant TG as 🤖 DeepTrade Bot
-    participant LLM as 🧠 LangGraph Supervisor
+    participant Agent as 🧠 DeepTrade Agent
     participant Tool as ⚡ Upstox Tools
     participant API as 🏦 Upstox API
 
     User->>TG: "Buy 1 share of PCJEWELLER"
-    TG->>LLM: Ingest prompt + Pre-flight verification
-    LLM->>Tool: Call upstox_get_market_data(symbol="PCJEWELLER")
+    TG->>Agent: Ingest prompt + Pre-flight verification
+    Agent->>Tool: Call upstox_get_market_data(symbol="PCJEWELLER")
     Tool->>API: Fetch current LTP (₹9.74)
     API-->>Tool: Return ₹9.74
-    Tool-->>LLM: Return LTP
-    LLM->>Tool: Call upstox_place_order(symbol="PCJEWELLER", qty=1, price=9.74)
+    Tool-->>Agent: Return LTP
+    Agent->>Tool: Call upstox_place_order(symbol="PCJEWELLER", qty=1, price=9.74)
     Tool->>TG: Send Inline Buttons [✅ Confirm] [❌ Cancel]
     Note over Tool: Registers Future & awaits user click (up to 5 mins)
     User->>TG: Clicks [✅ Confirm]
     TG->>Tool: Resolves Future with "confirm"
     Tool->>API: Executes PlaceOrderV3Request
     API-->>Tool: 200 OK (Order ID: 2608210001)
-    Tool-->>LLM: Return execution confirmation
-    LLM-->>TG: "✅ Order successfully placed for 1 share of PCJEWELLER at ₹9.74!"
+    Tool-->>Agent: Return execution confirmation
+    Agent-->>TG: "✅ Order successfully placed for 1 share of PCJEWELLER at ₹9.74!"
 ```
 
 ---
@@ -107,8 +106,8 @@ DeepTrade comes with comprehensive architectural and operational documentation:
 | Document | Purpose |
 | :--- | :--- |
 | **[Setup & Environment Guide (`setup_instructions.md`)](./setup_instructions.md)** | Step-by-step guide for configuring all API keys, local Ngrok vs Cloud deployment, daily OAuth token generation, and static IP whitelisting. |
-| **[Architecture & Skills Spec (`architecture_and_skills.md`)](./architecture_and_skills.md)** | Deep architectural breakdown of LangGraph orchestration, SSE event streaming, database schemas, and SDK workarounds. |
-| **[Upstox Tools & Subagents Spec (`upstox_tools_and_subagents.md`)](./upstox_tools_and_subagents.md)** | Complete parameter reference for all trading tools, sandbox mock registry, and Telegram command mappings. |
+| **[Architecture & Skills Spec (`architecture_and_skills.md`)](./architecture_and_skills.md)** | Deep architectural breakdown of DeepAgent graph, SSE event streaming, database schemas, and SDK workarounds. |
+| **[Upstox Tools & Agent Spec (`upstox_tools_and_subagents.md`)](./upstox_tools_and_subagents.md)** | Complete parameter reference for all trading tools, sandbox mock registry, and Telegram command mappings. |
 
 ---
 
@@ -117,7 +116,7 @@ DeepTrade comes with comprehensive architectural and operational documentation:
 | Layer | Technologies |
 | :--- | :--- |
 | **Backend & API** | Python 3.10+, FastAPI, Uvicorn, APScheduler |
-| **AI & Multi-Agent** | LangGraph, LangChain, DeepAgents, OpenRouter (`poolside/laguna-s-2.1:free`, `nvidia/nemotron-3.5-lightning:free`) |
+| **AI & Agentic Framework** | DeepAgents, LangGraph, LangChain, OpenRouter (`poolside/laguna-s-2.1:free`, `nvidia/nemotron-3.5-lightning:free`) |
 | **Database & State** | PostgreSQL (Supabase / Neon), `psycopg_pool`, `AsyncPostgresSaver`, `AsyncPostgresStore` |
 | **Broker Integration** | Upstox Python SDK v3, Upstox Market Quote & History APIs |
 | **Client Interfaces** | Telegram Bot API (`aiogram` Webhooks), React + Vite + TypeScript Web UI |
