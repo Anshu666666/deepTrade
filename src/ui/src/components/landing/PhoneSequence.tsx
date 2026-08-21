@@ -7,14 +7,14 @@ import AsciiGlitchRipple from '../ui/ascii-glitch-ripple';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Dynamically import all jpeg frames in the directory
-const frameModules = import.meta.glob('../../assets/Mockups/IphoneMockup/*.jpg', { eager: true, query: '?url', import: 'default' });
+// Dynamically import all mockup frames in the directory (supports .png, .jpg, .jpeg, .webp)
+const frameModules = import.meta.glob('../../assets/Mockups/IphoneMockup/*.{png,jpg,jpeg,webp,PNG,JPG,JPEG,WEBP}', { eager: true, query: '?url', import: 'default' });
 
 // Extract and sort URLs numerically
 const frameUrls = Object.keys(frameModules)
   .sort((a, b) => {
-    const numA = parseInt(a.match(/(\d+)\.jpg$/)?.[1] || '0', 10);
-    const numB = parseInt(b.match(/(\d+)\.jpg$/)?.[1] || '0', 10);
+    const numA = parseInt(a.match(/(\d+)\.[a-zA-Z0-9]+$/)?.[1] || '0', 10);
+    const numB = parseInt(b.match(/(\d+)\.[a-zA-Z0-9]+$/)?.[1] || '0', 10);
     return numA - numB;
   })
   .map(k => frameModules[k] as string);

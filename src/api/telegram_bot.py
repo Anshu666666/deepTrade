@@ -183,9 +183,16 @@ async def cmd_deepdive(message: types.Message, command: CommandObject):
 
 @dp.message()
 async def handle_message(message: types.Message):
+    if not message.text:
+        await message.answer("Please send a stock ticker or financial query in text.")
+        return
     await process_query(message, message.text)
 
 async def process_query(message: types.Message, query_text: str):
+    if not query_text or not isinstance(query_text, str) or not query_text.strip():
+        await message.answer("Please send a valid query.")
+        return
+
     if not _graph:
         await message.answer("❌ Agent graph is not initialized.")
         return
