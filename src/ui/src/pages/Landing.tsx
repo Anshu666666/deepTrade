@@ -141,7 +141,7 @@ const Landing: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative bg-black font-sans min-h-screen">
+    <div className="relative bg-black font-sans min-h-screen w-full max-w-[100vw] overflow-x-clip">
       
       {/* Launch Modal for Public / Vercel visitors */}
       <LaunchModal
