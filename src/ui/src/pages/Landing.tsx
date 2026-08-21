@@ -409,11 +409,11 @@ const Landing: React.FC = () => {
               />
             </div>
 
-            {/* iPhone Mockup - Positioned on the RHS of the vault, completely uncut */}
+            {/* iPhone Mockup - Scaled to 0.7x */}
             <img 
               src={authenticatorIphoneImg} 
               alt="Authenticator App on iPhone" 
-              className="absolute -bottom-8 -right-2 sm:-bottom-12 sm:-right-4 md:-bottom-28 md:-right-8 lg:-bottom-36 lg:-right-12 w-36 sm:w-44 md:w-64 lg:w-[380px] object-contain z-10 pointer-events-none drop-shadow-2xl"
+              className="absolute -bottom-6 -right-2 sm:-bottom-8 sm:-right-3 md:-bottom-20 md:-right-6 lg:-bottom-24 lg:-right-8 w-28 sm:w-32 md:w-44 lg:w-[270px] object-contain z-10 pointer-events-none drop-shadow-2xl"
             />
           </div>
         </div>
@@ -432,7 +432,7 @@ const Landing: React.FC = () => {
       </div>
 
       {/* FOOTER */}
-      <div className="relative min-h-[360px] md:min-h-[50dvh] w-full z-30 -mt-6 md:mt-0" style={{ height: 'clamp(360px, 50dvh, 650px)' }}>
+      <div className="relative min-h-[420px] md:min-h-[58dvh] w-full z-30 -mt-6 md:mt-0" style={{ height: 'clamp(420px, 58dvh, 750px)' }}>
         <AnimatedFooter
           headingLines={["Think. Analyse. Trade."]}
           leftImage="/footer-left.jpg"

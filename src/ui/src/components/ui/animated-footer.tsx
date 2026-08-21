@@ -359,21 +359,21 @@ export function AnimatedFooter({
       className={cn("relative h-full w-full overflow-hidden", className)}
       style={{ backgroundColor: background, color: textColor, containerType: "inline-size" }}
     >
-      {/* ASCII hands — positioned higher on mobile */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-[22%] md:bottom-[12%] top-0 flex items-end justify-between">
+      {/* ASCII hands — scaled and positioned so tops are never sliced by overflow-hidden */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-12 sm:bottom-16 md:bottom-20 top-2 sm:top-6 flex items-end justify-between">
         <div
           ref={leftWrapRef}
-          className="relative w-[52%] min-w-[140px] will-change-transform"
+          className="relative w-[48%] max-w-[540px] min-w-[140px] will-change-transform flex items-end"
           style={{ transform: `translateX(-${offEdge}%)` }}
         >
-          <canvas ref={leftCanvasRef} className="block h-auto w-full" />
+          <canvas ref={leftCanvasRef} className="block h-auto max-h-full w-full object-contain" />
         </div>
         <div
           ref={rightWrapRef}
-          className="relative w-[52%] min-w-[140px] will-change-transform"
+          className="relative w-[48%] max-w-[540px] min-w-[140px] will-change-transform flex items-end"
           style={{ transform: `translateX(${offEdge}%)` }}
         >
-          <canvas ref={rightCanvasRef} className="block h-auto w-full" />
+          <canvas ref={rightCanvasRef} className="block h-auto max-h-full w-full object-contain" />
         </div>
       </div>
 
