@@ -250,7 +250,7 @@ const Landing: React.FC = () => {
           {/* Video & MacBook Container */}
           <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:left-[8%] lg:left-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center">
             {/* Native Demo Video */}
-            <div className="w-full aspect-video bg-black border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
+            <div className="w-full bg-black border border-zinc-800 rounded-xl shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
               <video
                 src={demoVideo}
                 autoPlay
@@ -258,7 +258,7 @@ const Landing: React.FC = () => {
                 muted
                 playsInline
                 controls
-                className="w-full h-full object-cover rounded-xl"
+                className="w-full h-auto block rounded-xl"
               />
             </div>
 
