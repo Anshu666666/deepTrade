@@ -284,6 +284,7 @@ const Landing: React.FC = () => {
                 loop
                 muted
                 playsInline
+                controls
                 preload="metadata"
                 className="w-full h-auto block rounded-xl"
               />
