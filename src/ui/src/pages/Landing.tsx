@@ -375,12 +375,12 @@ const Landing: React.FC = () => {
         <div className="w-full h-48 md:h-80 lg:h-[480px] pointer-events-none" />
 
         {/* SECTION 5: SECURITY & SANDBOX */}
-        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
+        <div className="relative min-h-0 md:min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-6 md:gap-0 pt-8 md:pt-0 pb-6 md:pb-16">
           
           {/* Text Section (Right on desktop, First on mobile) */}
           <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[42%] lg:w-[40%] md:mr-10 lg:mr-20 pointer-events-auto">
             <h2 
-              className="font-normal mb-6" 
+              className="font-normal mb-4 md:mb-6" 
               style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
             >
               Fortified Freedom.
@@ -394,7 +394,7 @@ const Landing: React.FC = () => {
           </div>
 
           {/* Visuals Container (Left on desktop, Second on mobile - with generous margin from text) */}
-          <div className="relative w-[90%] md:w-[42%] lg:w-[44%] md:absolute md:left-[4%] lg:left-[6%] md:top-[64%] md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
+          <div className="relative w-[90%] md:w-[42%] lg:w-[44%] md:absolute md:left-[4%] lg:left-[6%] md:top-[64%] md:-translate-y-1/2 z-10 flex flex-col items-center mt-4 md:mt-0 pointer-events-none sm:pointer-events-auto">
             {/* Vault Component */}
             <div className="w-full flex items-center justify-center relative z-10">
               <VaultLock 
@@ -413,8 +413,8 @@ const Landing: React.FC = () => {
           </div>
         </div>
 
-        {/* Spacer between Section 5 and Footer: tight on mobile, spacious on desktop */}
-        <div className="w-full h-6 sm:h-12 md:h-48 lg:h-[250px] pointer-events-none" />
+        {/* Spacer between Section 5 and Footer: 0 on mobile, spacious on desktop */}
+        <div className="w-full h-0 md:h-48 lg:h-[250px] pointer-events-none" />
       </div>
 
       {/* POP-UP TYPING KEYBOARD */}
@@ -427,7 +427,7 @@ const Landing: React.FC = () => {
       </div>
 
       {/* FOOTER */}
-      <div className="relative min-h-[50dvh] w-full z-30" style={{ height: 'clamp(400px, 55dvh, 650px)' }}>
+      <div className="relative min-h-[40dvh] md:min-h-[50dvh] w-full z-30" style={{ height: 'clamp(320px, 50dvh, 650px)' }}>
         <AnimatedFooter
           headingLines={["Think. Analyse. Trade."]}
           leftImage="/footer-left.jpg"
