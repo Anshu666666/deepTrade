@@ -313,7 +313,7 @@ const Landing: React.FC = () => {
 
         {/* SECTION 4: OPEN BY DESIGN */}
         <div
-          className="relative min-h-[100dvh] flex flex-col items-center justify-center px-8 md:px-12 lg:px-24 text-center"
+          className="relative min-h-[100dvh] flex flex-col items-center justify-center px-8 md:px-12 lg:px-24 text-center overflow-hidden"
           style={{
             '--s4-label-gap':      'clamp(1.5rem, 3vw, 2.5rem)',
             '--s4-heading-gap':    'clamp(1.75rem, 3.5vw, 3rem)',
@@ -362,12 +362,13 @@ const Landing: React.FC = () => {
               </p>
             </div>
 
-            {/* Globe Container - Positioned a bit lower and further right relative to the text */}
-            <div className="absolute top-[60%] -translate-y-1/2 -right-20 md:-right-48 lg:-right-80 w-56 md:w-[420px] lg:w-[560px] z-[-1] pointer-events-auto opacity-75">
-              <GlobeAnalytics />
-            </div>
-
           </div>
+
+          {/* Globe Container - Positioned at Section 4 bottom-right corner, cleanly clipped by overflow-hidden */}
+          <div className="absolute -bottom-24 -right-16 sm:-bottom-32 sm:-right-20 md:-bottom-44 md:-right-28 lg:-bottom-56 lg:-right-36 w-72 sm:w-96 md:w-[500px] lg:w-[680px] z-0 pointer-events-auto opacity-75">
+            <GlobeAnalytics />
+          </div>
+
         </div>
 
         {/* Generous margin/spacer between Section 4 and Section 5 */}
