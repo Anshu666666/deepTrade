@@ -205,7 +205,7 @@ const Landing: React.FC = () => {
         </h1>
 
         <p 
-          className="text-zinc-200 text-sm sm:text-base md:text-lg max-w-[620px] text-center mt-5 mb-10 md:mb-12 leading-relaxed tracking-wide font-normal"
+          className="text-zinc-200 text-sm sm:text-base md:text-lg max-w-[620px] text-center mt-4 sm:mt-5 mb-8 md:mb-12 leading-snug sm:leading-relaxed tracking-wide font-normal"
           style={{ textShadow: '0 2px 14px rgba(0,0,0,1), 0 4px 28px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1)' }}
         >
           DeepTrade is a conversational financial research and broker execution assistant for individual traders — one AI that analyzes markets, synthesizes filings and news, and executes confirmed orders on your Upstox account directly from chat.
@@ -314,7 +314,7 @@ const Landing: React.FC = () => {
             >
               The Autonomous Analyst.
             </h2>
-            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-lg md:ml-auto" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+            <p className="text-zinc-300 text-sm sm:text-base leading-snug sm:leading-relaxed max-w-lg md:ml-auto" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               DeepTrade doesn't just display data — it researches it. Powered by Exa for real-time web intelligence and Valyu for financial datasets and filings, the agent pulls from both and synthesizes it into one clear answer, not a wall of raw numbers.
             </p>
           </div>
@@ -393,10 +393,10 @@ const Landing: React.FC = () => {
             >
               Fortified Freedom.
             </h2>
-            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed mb-4" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+            <p className="text-zinc-300 text-sm sm:text-base leading-snug sm:leading-relaxed mb-3 sm:mb-4" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               Trade with confidence. DeepTrade is guarded by a rigorous 7-day Time-Based One-Time Password (TOTP) cycle, ensuring your active session remains yours alone.
             </p>
-            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+            <p className="text-zinc-300 text-sm sm:text-base leading-snug sm:leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               Not ready to risk capital? Engage the Sandbox Mock Registry. The agent simulates real market executions with a virtual portfolio, letting you practice research and order execution with ₹10,00,000 in virtual funds and zero financial exposure.
             </p>
           </div>
