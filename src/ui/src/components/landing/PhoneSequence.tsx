@@ -79,13 +79,14 @@ const PhoneSequence: React.FC = () => {
       const isMobile = logicalWidth < 768;
 
       if (isMobile) {
-        // MOBILE: Scale the phone sharply and position in lower view
-        const scale = (logicalHeight * 0.58) / img.height;
+        // MOBILE: Scale the phone so the entire device is fully visible without clipping at top/bottom
+        const scale = Math.min((logicalHeight * 0.46) / img.height, (logicalWidth * 0.95) / (img.width * 0.4));
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
-        // Centered horizontally with subtle right bias
-        const x = (logicalWidth / 2) - (drawWidth / 2) + (logicalWidth * 0.05);
-        const y = logicalHeight - drawHeight + (logicalHeight * 0.02);
+        // Centered horizontally
+        const x = (logicalWidth / 2) - (drawWidth / 2);
+        // Positioned neatly in the lower screen with clean bottom margin
+        const y = logicalHeight - drawHeight - 16;
         
         ctx.clearRect(0, 0, logicalWidth, logicalHeight);
         ctx.drawImage(img, x, y, drawWidth, drawHeight);
@@ -171,56 +172,54 @@ const PhoneSequence: React.FC = () => {
       {/* mix-blend-screen makes the black background of the mockup frames completely transparent! */}
       <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none mix-blend-screen" />
 
-      {/* FIX #1 & #6: Bounded right edge + responsive left offset. Removed scrollbar as requested. */}
-      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-0 bottom-[25vh] md:bottom-0 box-border flex flex-col justify-center">
+      {/* Content block: pinned cleanly to top on mobile with room for phone below, centered on desktop */}
+      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-4 sm:top-8 md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
 
-        {/* GAP AFTER HEADING — clamp: 16px on small screens → 30px on large */}
         <h2
-          className="font-normal"
-          style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)', textShadow: '0 4px 20px rgba(0,0,0,0.8)', marginBottom: 'clamp(16px, 3vh, 30px)' }}
+          className="font-normal mb-1 sm:mb-2 md:mb-4"
+          style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.4rem, 3.2vw, 3.8rem)', textShadow: '0 4px 20px rgba(0,0,0,0.8)' }}
         >
           <FlipText delay={0.2} together={false} duration={10}>Trade Anywhere.</FlipText>
         </h2>
         
-        {/* GAP AFTER PARAGRAPH — clamp: 12px on small screens → 20px on large */}
         <p
-          className="text-zinc-300 text-sm sm:text-base leading-relaxed"
-          style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.95)', marginBottom: 'clamp(10px, 1.5vh, 14px)' }}
+          className="text-zinc-300 text-[11px] sm:text-sm md:text-base leading-snug sm:leading-relaxed mb-1 sm:mb-1.5"
+          style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.95)' }}
         >
           Execute orders, receive intelligence, and manage risk directly from your <LineHoverLink variant="pulse">Telegram app</LineHoverLink>. 
         </p>
 
         <p
-          className="text-zinc-300 text-sm sm:text-base leading-relaxed"
-          style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.95)', marginBottom: 'clamp(14px, 2.5vh, 24px)' }}
+          className="text-zinc-400 text-[11px] sm:text-sm md:text-base leading-snug sm:leading-relaxed mb-2 sm:mb-3 md:mb-5"
+          style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.95)' }}
         >
           Connects directly to your own Upstox account via secure OAuth — the same account you already trade on, no separate sign-up.
         </p>
 
-        {/* GAP AFTER SUPERVISOR SECTION — clamp: 16px on small screens → 28px on large */}
-        <div className="hidden md:block space-y-2.5" style={{ marginBottom: 'clamp(14px, 2.5vh, 28px)' }}>
+        {/* Desktop supervisor description */}
+        <div className="hidden md:block space-y-2 mb-5">
             <h3 className="text-xs tracking-[0.2em] text-[#54A1FD] uppercase font-semibold">The Supervisor Agent</h3>
             <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95)' }}>
               One agent, not a black box. Every reasoning step, market lookup, and tool call streams to you in real time — and every trade requires your explicit confirmation before a single order touches your account. Nothing executes without you seeing it first.
             </p>
         </div>
 
-        {/* FIX #2: max-w-full on mobile, max-w-[460px] on sm+ */}
-        <div className="bg-[#0a0a0a]/90 p-4 sm:p-6 md:p-8 border border-zinc-800/80 rounded-xl font-mono text-xs sm:text-sm md:text-base text-zinc-400 space-y-4 sm:space-y-5 backdrop-blur-md w-full max-w-full sm:max-w-[460px] shadow-2xl">
-            <div className="text-white mb-2 relative inline-block">
+        {/* Compact SYSTEM_COMMANDS terminal box */}
+        <div className="bg-[#0a0a0a]/90 p-2 sm:p-3 md:p-6 border border-zinc-800/80 rounded-lg sm:rounded-xl font-mono text-[10px] sm:text-xs md:text-sm text-zinc-400 space-y-1 sm:space-y-2 backdrop-blur-md w-full max-w-full sm:max-w-[420px] shadow-2xl">
+            <div className="text-white mb-0.5 sm:mb-1 relative inline-block text-[10px] sm:text-xs">
               <span className="relative z-10 font-semibold tracking-wide ascii-glitch" data-text="~ % SYSTEM_COMMANDS">~ % SYSTEM_COMMANDS</span>
             </div>
-            <div className="flex flex-col gap-2 sm:gap-3">
-              <AsciiGlitchRipple as="div" className="text-zinc-300 hover:text-white transition-colors cursor-pointer py-1 block select-none" dur={1000}>
+            <div className="flex flex-col gap-0.5 sm:gap-1 text-[9.5px] sm:text-xs md:text-sm leading-tight sm:leading-snug">
+              <AsciiGlitchRipple as="div" className="text-zinc-300 hover:text-white transition-colors cursor-pointer py-0.5 px-0.5 block select-none" dur={1000}>
                 /analyse - Financial analysis
               </AsciiGlitchRipple>
-              <AsciiGlitchRipple as="div" className="text-zinc-300 hover:text-white transition-colors cursor-pointer py-1 block select-none" dur={1000}>
+              <AsciiGlitchRipple as="div" className="text-zinc-300 hover:text-white transition-colors cursor-pointer py-0.5 px-0.5 block select-none" dur={1000}>
                 /deepdive - In-depth research
               </AsciiGlitchRipple>
-              <AsciiGlitchRipple as="div" className="text-zinc-300 hover:text-white transition-colors cursor-pointer py-1 block select-none" dur={1000}>
+              <AsciiGlitchRipple as="div" className="text-zinc-300 hover:text-white transition-colors cursor-pointer py-0.5 px-0.5 block select-none" dur={1000}>
                 /sandbox - Simulated execution
               </AsciiGlitchRipple>
-              <AsciiGlitchRipple as="div" className="text-[#FF4040] hover:text-[#FF5555] transition-colors cursor-pointer py-1 block select-none" dur={1000}>
+              <AsciiGlitchRipple as="div" className="text-[#FF4040] hover:text-[#FF5555] transition-colors cursor-pointer py-0.5 px-0.5 block select-none" dur={1000}>
                 /live - Real market execution
               </AsciiGlitchRipple>
             </div>
