@@ -1,99 +1,192 @@
 # DeepTrade: Setup & Architecture Guide
 
+```mermaid
+flowchart LR
+    subgraph LocalSetup["💻 Local Deployment (Laptop / PC)"]
+        LOCAL_SRV["FastAPI Backend (0.0.0.0:8000)"]
+        NGROK_TUNNEL["Ngrok Tunnel (USE_NGROK=true)"]
+        STATIC_DOMAIN["Static Domain (NGROK_DOMAIN)"]
+        LOCAL_SRV --> NGROK_TUNNEL --> STATIC_DOMAIN
+    end
+
+    subgraph CloudSetup["☁️ Cloud Deployment (Render / AWS / GCP)"]
+        CLOUD_SRV["FastAPI Backend (0.0.0.0:8000)"]
+        CLOUD_URL["Static Public HTTPS Domain (PUBLIC_URL)"]
+        CLOUD_SRV --> CLOUD_URL
+    end
+
+    subgraph WebhookTargets["Active Public Endpoints"]
+        STATIC_DOMAIN --> TG_HOOK["Telegram Webhook (/webhook/telegram)"]
+        STATIC_DOMAIN --> UPSTOX_HOOK["Upstox OAuth Redirect (/upstox/callback)"]
+        CLOUD_URL --> TG_HOOK
+        CLOUD_URL --> UPSTOX_HOOK
+    end
+```
+
+---
+
 ## Part 1: Environment Variables Setup (Where to fetch them)
-Before starting DeepTrade, you must configure your environment variables. Below is a detailed guide on where to obtain every single required key.
+Before starting DeepTrade, configure your `.env` file in the root directory. Below is the complete reference on where to obtain every required key:
+
+```mermaid
+graph TD
+    ENV[".env Configuration"]
+    ENV --> AI["🤖 AI & Search APIs<br/>- OPENROUTER_API_KEY<br/>- OPENROUTER_MODEL<br/>- VALYU_API_KEY<br/>- EXA_API_KEY"]
+    ENV --> DB["🐘 Database<br/>- PG_DATABASE_URL"]
+    ENV --> BROKER["📈 Upstox Broker<br/>- UPSTOX_CLIENT_ID<br/>- UPSTOX_CLIENT_SECRET<br/>- UPSTOX_ANALYTICS_TOKEN<br/>- UPSTOX_SANDBOX_ACCESS_TOKEN"]
+    ENV --> TG["📱 Telegram & Tunnel<br/>- TELEGRAM_BOT_TOKEN<br/>- USE_NGROK<br/>- NGROK_AUTHTOKEN<br/>- NGROK_DOMAIN"]
+```
 
 ### External AI & Search APIs
-*   **`EXA_API_KEY`**: Sign up at [Exa.ai](https://exa.ai/) to get your API key for agentic web search capabilities.
-*   **`VALYU_API_KEY`**: Obtain your API key from Valyu for real-time financial data retrieval.
-*   **`OPENROUTER_API_KEY`**: Create an account at [OpenRouter.ai](https://openrouter.ai/) to access LLMs like Claude, GPT, or open-source models.
-*   **`OPENROUTER_MODEL`**: Set the specific model string you want to use (e.g., `poolside/laguna-m.1:free` or `anthropic/claude-3.5-sonnet`).
+* **`OPENROUTER_API_KEY`**: Create an account at [OpenRouter.ai](https://openrouter.ai/) to access LLMs.
+* **`OPENROUTER_MODEL`**: Set the specific model string (e.g., `poolside/laguna-s-2.1:free`, `nvidia/nemotron-3.5-lightning:free`, or `anthropic/claude-3.5-sonnet`).
+* **`EXA_API_KEY`**: Sign up at [Exa.ai](https://exa.ai/) to get your API key for agentic web search and financial news retrieval.
+* **`VALYU_API_KEY`**: Obtain your API key from [Valyu.network](https://valyu.network/) for real-time financial fundamentals and SEC filings.
 
-### Database
-*   **`PG_DATABASE_URL`**: Set up a PostgreSQL database (e.g., free tier on [Supabase](https://supabase.com/)). Obtain the connection URI (format: `postgresql://user:password@host:port/dbname`). This is required for persisting threads, state, and tokens.
+### Database (PostgreSQL)
+* **`PG_DATABASE_URL`**: Set up a PostgreSQL database (e.g., free tier on [Supabase](https://supabase.com/) or [Neon](https://neon.tech/)). 
+  * Connection URI format: `postgresql://postgres.[ref]:[password]@[host]:5432/postgres`.
+  * Persists user threads, query event streams, agent memory checkpoints, and bot configuration.
 
 ### Upstox API Credentials
-1.  Go to the [Upstox Developer Console](https://account.upstox.com/developer/apps).
-2.  **`UPSTOX_SANDBOX_ACCESS_TOKEN`**: From the **Sandbox** section, generate and copy the token for simulated paper trading.
-3.  **`UPSTOX_ANALYTICS_TOKEN`**: From the **Analytics** section, generate and copy the token for historical market data.
-4.  **`UPSTOX_CLIENT_ID` & `UPSTOX_CLIENT_SECRET`**: Create a **Live App** in the Upstox console. Copy the Client ID and Secret.
-    *   *Important:* You must whitelist your server URL in the Upstox portal as the Redirect URI (e.g., `https://your-domain.ngrok-free.dev/upstox/callback`).
+1. Go to the [Upstox Developer Console](https://account.upstox.com/developer/apps).
+2. **`UPSTOX_SANDBOX_ACCESS_TOKEN`**: From the **Sandbox** section, generate and copy the token for simulated paper trading.
+3. **`UPSTOX_ANALYTICS_TOKEN`**: From the **Analytics** section, generate and copy the token for real-time and historical market quotes.
+4. **`UPSTOX_CLIENT_ID` & `UPSTOX_CLIENT_SECRET`**: Create a **Live App** in the Upstox console. Copy the Client ID and Secret.
+   * *Important:* You must set the Redirect URI in the Upstox portal to: `https://<your-domain>/upstox/callback` (e.g., `https://your-domain.ngrok-free.dev/upstox/callback`).
 
 ### Telegram Bot
-*   **`TELEGRAM_BOT_TOKEN`**: Open Telegram, search for `@BotFather`, and type `/newbot`. Follow the prompt steps to name your bot and receive your unique HTTP API token.
+* **`TELEGRAM_BOT_TOKEN`**: Open Telegram, search for `@BotFather`, and type `/newbot`. Follow the steps to name your bot and receive your HTTP API token.
 
 ### Server Deployment Settings
-*   **`USE_NGROK`**: Set to `true` if running locally on your laptop, or `false` if deploying to the cloud.
-*   **`PUBLIC_URL`**: If hosting on a cloud provider (Render, GCP, AWS), paste your given static HTTPS domain here (e.g., `https://my-app.onrender.com`).
-*   **`NGROK_AUTHTOKEN` & `NGROK_DOMAIN`**: If using local testing (`USE_NGROK=true`), get your Authtoken and claim a static domain from your [Ngrok Dashboard](https://dashboard.ngrok.com/).
+* **`USE_NGROK`**: Set to `true` if running locally on your laptop/PC, or `false` if deploying to the cloud.
+* **`PUBLIC_URL`**: If hosting on a cloud provider (Render, GCP, AWS), paste your given static HTTPS domain here (e.g., `https://my-app.onrender.com`).
+* **`NGROK_AUTHTOKEN` & `NGROK_DOMAIN`**: If using local testing (`USE_NGROK=true`), get your Authtoken and claim a static free domain from your [Ngrok Dashboard](https://dashboard.ngrok.com/).
 
 ---
 
 ## Part 2: Upstox Live Access Token Workflow
-Here is the complete end-to-end flow of exactly how this token system works, including the inputs and outputs:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Trader as 👤 Trader (Telegram / CLI)
+    participant CLI as ⚙️ generate_live_token.py
+    participant Server as ⚡ FastAPI (main.py)
+    participant Upstox as 🏦 Upstox Auth Server
+    participant DB as 🐘 PostgreSQL
+
+    Note over Trader,CLI: Morning Token Refresh (Daily after 3:30 AM IST)
+    Trader->>CLI: Run python generate_live_token.py
+    CLI->>DB: Fetch WEBHOOK_DOMAIN & UPSTOX_CLIENT_ID
+    CLI-->>Trader: Sends Auth Link to Telegram & Console
+    Trader->>Upstox: Clicks link & authenticates with PIN / OTP
+    Upstox->>Server: Redirects browser to /upstox/callback?code=...
+    Server->>Upstox: Exchanges code for 24-Hour Live Access Token
+    Upstox-->>Server: Returns Access Token
+    Server->>DB: Saves UPSTOX_LIVE_ACCESS_TOKEN & timestamp
+    Server->>Trader: Telegram: "✅ Live token successfully refreshed for today!"
+```
 
 ### 1. Inputs to the Script
-When you run `generate_live_token.py`, it requires no manual arguments. It pulls everything it needs automatically:
-
-* **`UPSTOX_CLIENT_ID`**: Fetched from your `.env` file to identify your specific app to Upstox.
-* **`WEBHOOK_DOMAIN`**: It checks the PostgreSQL database to find the exact Ngrok/Cloud URL your main server is currently using.
-* **Telegram Credentials**: It fetches your `TELEGRAM_BOT_TOKEN` from `.env` and `ADMIN_CHAT_ID` from the database.
+When you run `generate_live_token.py`, it requires no manual arguments:
+* **`UPSTOX_CLIENT_ID`**: Fetched from your `.env` file to identify your app to Upstox.
+* **`WEBHOOK_DOMAIN`**: Checks PostgreSQL to find the verified domain your server is actively listening on.
+* **Telegram Credentials**: Pulls `TELEGRAM_BOT_TOKEN` from `.env` and `ADMIN_CHAT_ID` from the database.
 
 ### 2. Output of the Script
-* **Terminal Output**: It prints a clearly formatted, clickable `https://api.upstox.com/...` authorization link directly into your console.
-* **Telegram Output**: It instantly sends a message to your Telegram bot containing the exact same clickable authorization link.
+* **Terminal Output**: Prints a clickable authorization link in your console.
+* **Telegram Output**: Instantly sends a message to your Telegram bot with the clickable authorization link.
 
-### 3. The Complete Flow (Step-by-Step)
-1. **You trigger the script**: You run `python generate_live_token.py` (while your main server `python main.py` is running in the background).
-2. **You click the link**: You click the authorization link in either your terminal or your Telegram app.
-3. **Upstox Login**: Your browser opens the Upstox login portal. You enter your PIN/OTP to authenticate.
-4. **The Callback (The Handoff)**: Upon successful login, Upstox redirects your browser back to your server address (specifically `/upstox/callback`).
-5. **The Server Takes Over**: Your running `main.py` server intercepts this callback, takes the temporary access code provided by Upstox, and securely exchanges it for a true 24-Hour Live Access Token.
-6. **Data Storage**: The server permanently saves this new Live token directly into your PostgreSQL database with a fresh timestamp.
-7. **Cache Cleared & Notification**: The server clears out the old Upstox client memory and sends you a final Telegram message: *"✅ Live token successfully refreshed for today!"*
+### 3. Step-by-Step Flow
+1. **Trigger the script**: Run `python generate_live_token.py` (with `python main.py` running).
+2. **Click the link**: Open the authorization link on your browser or Telegram.
+3. **Upstox Login**: Enter your Upstox mobile number, OTP, and 6-digit PIN.
+4. **The Callback (The Handoff)**: Upstox redirects back to `https://<your-domain>/upstox/callback`.
+5. **The Server Takes Over**: The server intercepts the temporary code and exchanges it with Upstox for a fresh 24-Hour Live Access Token.
+6. **Data Storage**: Permanently saves the token in PostgreSQL (`bot_settings`) with a current timestamp.
+7. **Confirmation**: Sends a notification to Telegram: *"✅ Live token successfully refreshed for today!"*
 
-### 4. The Automated Safety Net
-As an added layer of logic, if you forget to run this script or the morning cron job fails, the system protects you:
+---
 
-* Whenever you type a command or query in LIVE mode (via web or Telegram), the system first looks at the token in the database.
-* It checks the token's timestamp. If the token was generated before 3:30 AM IST today, it blocks the AI from attempting to use it.
-* Instead of failing with confusing API errors, the bot gracefully replies: *"⚠️ LIVE Access Token Expired"* and provides you with the authorization link on the spot to continue your task.
+## Part 3: Deterministic Pre-Flight IP & Token Verification
 
-### 5. Deployment Architecture: Cloud vs. Local (Ngrok)
-To allow the server to properly receive the Upstox Callback and Telegram messages, it must have a publicly accessible URL. The system handles this in two ways:
+```mermaid
+flowchart TD
+    Start([User sends query in LIVE mode]) --> PreCheck{Pre-Flight Verification}
+    
+    PreCheck --> CheckToken{Is Token Valid?<br/>Updated after 3:30 AM IST?}
+    CheckToken -- No --> BlockExpired[Halt before LLM<br/>Send Auth Link to User]
+    
+    CheckToken -- Yes --> CheckIP{Does Current Public IP<br/>Match Whitelisted Static IP?}
+    CheckIP -- Match --> AllowLLM[Proceed to LangGraph Engine<br/>Execute Prompt]
+    
+    CheckIP -- IP Changed --> AutoSync[Auto-Send PUT /v2/user/ip to Upstox API]
+    AutoSync --> InvalidateOldToken[Save New IP in DB & Reset Old Token]
+    InvalidateOldToken --> NotifyUser[Notify User: 'IP Changed & Synced.<br/>Click to Re-Authorize' & Halt]
+```
 
-**Local Deployment (Laptop/PC):**
-*   **`USE_NGROK=true`**: When this is set in the `.env` file, the server automatically boots up an Ngrok tunnel to expose your local machine to the internet.
-*   **`NGROK_DOMAIN` & `NGROK_AUTHTOKEN`**: These are instructions to the Ngrok service. When your server starts up, it tells Ngrok, *"Hey, please give me this specific, static URL instead of a random one."* This is critical because the Upstox API requires you to whitelist a specific `redirect_uri` in their developer console. If your URL changed every time you restarted the server, Upstox would reject the login.
+### Why Deterministic Pre-Flight Checks Matter:
+Rather than letting an agent generate reasoning tokens and attempt tool calls that eventually fail with broker HTTP 403 errors, DeepTrade intercepts all requests *before* sending anything to the LLM:
+1. **Token Lifetime**: Validates that the active token was generated today after 3:30 AM IST.
+2. **Dynamic Public IP Detection**: Queries `https://api.ipify.org` in <100ms.
+3. **Automated Whitelist Sync**: If your home WiFi or server IP changed, DeepTrade automatically invokes `PUT https://api.upstox.com/v2/user/ip` to update Upstox static IP settings without manual console configuration.
 
-**Cloud Deployment (Render/AWS/GCP):**
-*   **`PUBLIC_URL`**: When hosting on a cloud provider, they provide a static URL for you. Running Ngrok in the cloud is bad practice and wastes resources. By specifying `PUBLIC_URL=https://my-app.com` and `USE_NGROK=false` in your cloud's environment variables, the server entirely skips Ngrok and directly registers your provided cloud URL with Telegram and Upstox.
-*   *Graceful Fallback:* If you deploy to the cloud for the first time without a `PUBLIC_URL` set (because you don't know it yet), the server won't crash. It will boot successfully, print a warning, and wait for you to add the `PUBLIC_URL` to your environment settings before it activates the webhooks.
+---
 
-**The PostgreSQL DB (`WEBHOOK_DOMAIN`)**: 
-Regardless of whether it uses Ngrok or a Cloud URL, once the server successfully determines its public domain, it saves it as the `WEBHOOK_DOMAIN` in the database. Background tasks (like the morning cron job or the `generate_live_token.py` script) query the database to construct the Upstox login link. This ensures they always use the genuinely active, verified URL that the server is currently listening on.
+## Part 4: Deployment Architecture: Local (Ngrok) vs. Cloud
 
-### 6. How is `ADMIN_CHAT_ID` Generated? (The Security Lock)
-DeepTrade implements a "First-Come, First-Served" security lock to protect your trading account:
-1. When the Telegram bot is started, it has no admin assigned.
-2. The very **first person** to send a message to the bot (e.g., sending `/start`) triggers the webhook.
-3. The server looks at the unique `chat_id` from that incoming message, sees that the `ADMIN_CHAT_ID` in the database is empty, and immediately saves that user's `chat_id` into the database as the permanent Admin.
-4. It sends a confirmation message to that user: *"🔐 Security Lock Active: This bot is now permanently locked to your Telegram account."*
-5. From that point forward, if any other random user on Telegram finds your bot and tries to send a message, the server compares their `chat_id` to the `ADMIN_CHAT_ID`. Because they don't match, the server simply ignores them and drops the request, ensuring nobody else can place trades on your Upstox account.
+| Dimension | Local Deployment (`USE_NGROK=true`) | Cloud Deployment (`USE_NGROK=false`) |
+| :--- | :--- | :--- |
+| **Best For** | Development, rapid iteration, testing from laptop | 24/7 autonomous trading, scheduled morning tasks |
+| **Domain Mechanism** | Ngrok static domain (e.g. `your-name.ngrok-free.dev`) | Cloud provider static URL (`PUBLIC_URL=https://...`) |
+| **Upstox Redirect URI** | `https://your-name.ngrok-free.dev/upstox/callback` | `https://your-cloud-app.onrender.com/upstox/callback` |
+| **Static IP Requirement** | Your local ISP IPv4 & IPv6 whitelisted via `update_ip.py` | Cloud provider static outbound IP whitelisted |
 
-### 7. Upstox Static IP Whitelisting & IPv6 Issues (UDAPI1154)
-The Upstox Live API requires you to whitelist your server's outbound IP address in the Developer Console. If the IP address does not match exactly, you will receive the `UDAPI1154: Access to this API is blocked due to static IP restrictions` error when attempting to place trades.
+---
 
-**The Shared IP Problem (Cloud Providers):**
-If you deploy to the free tier of a cloud provider (like Render), your server shares its outbound IP with hundreds of other apps. If another developer on Render has already whitelisted that exact shared IP on their Upstox account, you will get an *"IP address already assigned"* error when trying to claim it, because Upstox requires unique static IPs per developer account.
+## Part 5: Single-User Security Lock (`ADMIN_CHAT_ID`)
 
-**The IPv6 Connectivity Problem (Local Testing):**
-When testing locally via Ngrok, you must whitelist your home WiFi's public IP address. However, modern Indian ISPs (like Jio or Airtel) use **IPv6** natively to route traffic to `api.upstox.com`. 
-Even if you lookup your IPv4 address (e.g. `49.36.144.6`) and whitelist it, Upstox will still block your trades because it sees the request originating from your IPv6 address (e.g. `2405:201:4039:5035:9171:7999:a453:33d`).
+```mermaid
+flowchart TD
+    IncomingMsg[Incoming Message from Telegram] --> CheckLock{Is ADMIN_CHAT_ID set in DB?}
+    
+    CheckLock -- No (First Run) --> ClaimAdmin[Save incoming chat_id as ADMIN_CHAT_ID]
+    ClaimAdmin --> ConfirmLock[Send: '🔐 Security Lock Active: Locked to your account']
+    ConfirmLock --> ProcessMsg[Process Command / Query]
+    
+    CheckLock -- Yes (Already Bound) --> VerifyUser{Does incoming chat_id == ADMIN_CHAT_ID?}
+    VerifyUser -- Yes --> ProcessMsg
+    VerifyUser -- No (Unauthorized) --> DropMsg[Silently drop message & reject execution]
+```
 
-**The Fix (Dual IP Whitelisting via API):**
-The Upstox developer console UI doesn't always handle IPv6 perfectly. To fix this, DeepTrade includes a utility script (`update_ip.py`) that uses the Upstox API to programmatically assign BOTH your IPv4 and IPv6 addresses as your `primary_ip` and `secondary_ip`.
-1. You must have an active live token stored in the database.
-2. Edit `update_ip.py` and replace the IPs in the `data` dictionary with the exact IPs printed in your server logs during a failed order (the IPv4 from ipify.org, and the IPv6 from the `UDAPI1154` error response).
-3. Run `python update_ip.py`.
-4. *Important:* Upon successfully updating your IPs, Upstox will instantly invalidate your current access token for security reasons. You must re-login and generate a new token via Telegram before trading again.
+DeepTrade enforces strict single-user ownership:
+1. When deployed, `ADMIN_CHAT_ID` is empty.
+2. The very **first person** to send `/start` permanently claims the bot.
+3. All subsequent interactions from other Telegram accounts are silently dropped, preventing unauthorized trade executions.
+
+---
+
+## Part 6: Upstox Static IP Whitelisting & Dual-Stack IP Fix
+
+Upstox requires developer accounts to whitelist their outbound IP address for live trading operations.
+
+```mermaid
+graph LR
+    LocalMachine["Local PC / Router"] -->|IPv4: 117.250.240.128| UpstoxAPI["Upstox Live API"]
+    LocalMachine -->|IPv6: 2405:201:...| UpstoxAPI
+    
+    subgraph Fix["Dual-Stack Whitelist via API"]
+        UPDATE_IP["update_ip.py / Auto-Sync Pre-Check"]
+        UPDATE_IP -->|PUT /v2/user/ip| UpstoxAPI
+    end
+```
+
+### The Dual-Stack IPv4 / IPv6 Solution:
+Modern Indian ISPs (Jio, Airtel, ACT) route traffic to Upstox over IPv6. If only IPv4 is registered in the developer console, Upstox will reject orders with `UDAPI1154`.
+
+To solve this, DeepTrade uses [update_ip.py](./update_ip.py) and internal pre-flight sync to automatically assign both IPv4 and IPv6 as `primary_ip` and `secondary_ip` via the Upstox API:
+
+```bash
+python update_ip.py
+```

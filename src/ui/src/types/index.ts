@@ -59,6 +59,11 @@ export const COMMANDS = [
     desc: 'Exhaustive multi-angle research report  (e.g. /deep-dive TSLA)',
     instruction: 'The user wants a comprehensive deep-dive. Use the /deep-dive workflow: launch TWO DataCollector tasks in parallel (one for news/sentiment, one for financials/SEC), then have FinancialAnalyst synthesize both into a full deep-dive report.',
   },
+  {
+    name: '/toggle',
+    desc: 'Toggle between Sandbox (Paper) and LIVE trading mode',
+    instruction: '',
+  }
 ];
 
 export const LOG_TYPE_CONFIG: Record<string, { label: string; color: string; tagColor: string }> = {

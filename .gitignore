@@ -6,3 +6,8 @@ __pycache__/
 
 logs/
 scratch_*
+instruments_cache.csv
+sandbox_db.json
+research.md
+.vscode/
+.idea/

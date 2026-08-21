@@ -8,7 +8,7 @@ export function CandyButton({ className, children = "Candy Button", ...props }: 
     <button
       className={cn(
         "relative text-white font-semibold text-base leading-[22px] tracking-[0.02em]",
-        "px-9 py-3 rounded-[9999px] cursor-pointer transition-all duration-200 ease-out",
+        "px-8 py-3 rounded-[9999px] cursor-pointer transition-all duration-200 ease-out",
         "border border-[#54A1FD] bg-[radial-gradient(95%_60%_at_50%_75%,#005FD6_0%,#209BFF_100%)]",
         "shadow-[0px_4px_48px_-12px_#1187FF,inset_0px_1px_8px_-4px_#FFFFFF]",
         "active:scale-95 active:rotate-1",

@@ -1,113 +1,160 @@
-# Upstox Integration Documentation
+# Upstox Integration & Trading Subagent Reference
 
-This document outlines the Upstox API tools and subagents implemented in the DeepTrade multi-agent architecture.
+```mermaid
+flowchart TB
+    subgraph MultiAgentEngine["LangGraph Multi-Agent Engine"]
+        SUPERVISOR["🧠 Supervisor Agent"]
+        MRA["📊 MarketResearchAgent"]
+        TEX["⚡ TradeExecutor"]
+    end
 
-## Multi-Agent Architecture
+    subgraph ToolSuite["Upstox Tool Suite (src/agent/upstox_tools.py)"]
+        TOOL_QUOTE["upstox_get_market_data<br/>(LTP / OHLC / FULL)"]
+        TOOL_ORDER["upstox_place_order<br/>upstox_modify_order<br/>upstox_cancel_order"]
+        TOOL_PORTFOLIO["upstox_get_holdings<br/>upstox_get_positions<br/>upstox_get_funds<br/>upstox_get_order_book"]
+    end
 
-The system uses a hierarchical Supervisor-Subagent architecture defined in `src/agent/graph.py`.
+    subgraph ExecutionModes["Execution Routing by Mode (is_sandbox_mode)"]
+        LIVE_PATH["🏦 Live Mode: Upstox API v3<br/>(Real Capital & Broker Positions)"]
+        SANDBOX_PATH["🧪 Sandbox Mode: Mock Virtual Ledger<br/>(sandbox_db.json • ₹10,00,000 Fund)"]
+    end
 
-### `Supervisor`
-- **Purpose**: The main orchestration agent that interacts directly with the user. It receives the user's queries, determines the intent, and directly executes tools to fulfill the request.
-- **Workflow**: If a user asks for stock research, it uses research tools. If the user asks to buy a stock or check their portfolio, it uses Upstox execution tools.
-- **Safety**: Execution logic handles pending/confirmation cycles securely by halting the graph and awaiting user input via Telegram or the Web UI.
+    SUPERVISOR --> MRA
+    SUPERVISOR --> TEX
+    MRA --> TOOL_QUOTE
+    TEX --> TOOL_ORDER
+    TEX --> TOOL_PORTFOLIO
+
+    TOOL_ORDER -->|Live Mode + User Confirmed| LIVE_PATH
+    TOOL_ORDER -->|Sandbox Mode + User Confirmed| SANDBOX_PATH
+    TOOL_PORTFOLIO -->|Live Mode| LIVE_PATH
+    TOOL_PORTFOLIO -->|Sandbox Mode| SANDBOX_PATH
+```
 
 ---
 
-## Upstox Tools
+## 1. Multi-Agent Architecture
 
-All Upstox tools are defined in `src/agent/upstox_tools.py` and are provided to the respective agents.
+The system utilizes a hierarchical Supervisor-Subagent architecture defined in `src/agent/graph.py`.
+
+### `Supervisor`
+- **Purpose**: The primary conversational agent interacting directly with the user. It evaluates intent, coordinates research with the `MarketResearchAgent`, and delegates order tasks to the `TradeExecutor`.
+- **Workflow**: If a user asks for stock research, it delegates to the research subagent. If the user asks to buy a stock or check their portfolio, it directly utilizes or delegates to execution tools.
+- **Safety**: Never places an unconfirmed order. Halts and awaits interactive confirmation via Telegram inline buttons.
+
+---
+
+## 2. Upstox Tools Reference
+
+All trading tools are defined in `src/agent/upstox_tools.py`:
 
 ### 1. `upstox_get_market_data`
-- **Description**: Fetches market data for a given instrument.
+- **Description**: Fetches real-time and historical quotes for a given instrument.
 - **Parameters**:
-  - `symbol` (str): The symbol of the instrument (e.g., `"TCS"`, `"RELIANCE"`). The system automatically resolves this to the Upstox instrument key format.
-  - `data_type` (str): The type of data to fetch. Options are:
+  - `symbol` (str): Instrument ticker (e.g., `"TCS"`, `"RELIANCE"`, `"PCJEWELLER"`). Automatically resolved to Upstox key.
+  - `data_type` (str):
     - `"LTP"`: Latest Traded Price.
-    - `"OHLC"`: Daily Open, High, Low, Close snapshot.
-    - `"FULL"`: Full market quote.
-    - `"HISTORICAL"`: Past candle data.
-  - `interval` (str, optional): The time interval for historical data (e.g., `"1minute"`, `"day"`). Required if `data_type` is `"HISTORICAL"`.
+    - `"OHLC"`: Open, High, Low, Close daily snapshot.
+    - `"FULL"`: Full market depth and quote.
+    - `"HISTORICAL"`: Past candlestick data.
+  - `interval` (str, optional): Historical timeframe (e.g., `"1minute"`, `"day"`).
 
 ### 2. `upstox_place_order`
-- **Description**: Prepares an order and prompts the user for confirmation via the UI (Telegram or Web). It does **not** immediately place the order.
+- **Description**: Prepares an order and generates an interactive confirmation prompt. Calling this tool automatically presents `[✅ Confirm]` and `[❌ Cancel]` buttons to the user.
 - **Parameters**:
   - `symbol` (str): Instrument symbol.
   - `quantity` (int): Number of shares.
   - `transaction_type` (str): `"BUY"` or `"SELL"`.
   - `order_type` (str): `"MARKET"`, `"LIMIT"`, `"SL"`, `"SL-M"`.
-  - `price` (float): Required if `order_type` is `"LIMIT"` or `"SL"`.
+  - `price` (float): Order limit price.
 
 ### 3. `upstox_modify_order`
-- **Description**: Prepares an order modification and prompts the user for confirmation.
+- **Description**: Prepares an order modification and requests confirmation.
 - **Parameters**:
-  - `order_id` (str): The existing order ID to modify.
+  - `order_id` (str): Existing open order ID.
   - `quantity` (int): New quantity.
   - `price` (float): New price.
   - `order_type` (str): New order type.
 
 ### 4. `upstox_cancel_order`
-- **Description**: Prepares an order cancellation and prompts the user for confirmation.
+- **Description**: Prepares an order cancellation and requests confirmation.
 - **Parameters**:
-  - `order_id` (str): The existing order ID to cancel.
+  - `order_id` (str): Existing open order ID.
 
 ### 5. Portfolio Tools
-- **`upstox_get_order_book`**: Fetches the user's list of all orders for the day.
-- **`upstox_get_holdings`**: Fetches the user's current long-term holdings.
-- **`upstox_get_positions`**: Fetches the user's current intraday/open positions.
-- **`upstox_get_funds`**: Fetches the user's available funds and margins.
+- **`upstox_get_order_book`**: Fetches the user's list of all orders for today.
+- **`upstox_get_holdings`**: Fetches long-term equity holdings.
+- **`upstox_get_positions`**: Fetches current intraday and open F&O positions.
+- **`upstox_get_funds`**: Fetches available cash balance, margin, and utilized collateral.
 
 ---
 
-## Execution Flow & User Confirmation
-To prevent the AI from executing unauthorized trades, when `upstox_place_order`, `upstox_modify_order`, or `upstox_cancel_order` are invoked:
-1. A unique `confirmation_id` is generated.
-2. An `asyncio.Future` object is registered in `pending_tool_futures`.
-3. An interactive Telegram message with **Confirm/Cancel** inline buttons is sent to the admin.
-4. The tool execution is suspended (using `await future`), putting the subagent to "sleep" for up to 5 minutes.
-5. Once the user clicks the inline button in Telegram, the Telegram bot resolves the Future.
-6. The tool resumes, executing the actual Upstox SDK call if confirmed, and returning the API response (success or failure) to the agent.
+## 3. Two-Step Interactive Order Execution Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant LLM as 🧠 LangGraph Agent
+    participant Tool as ⚡ upstox_place_order
+    participant TG as 📱 Telegram Bot
+    actor Trader as 👤 User
+    participant Upstox as 🏦 Upstox v3 API
+
+    LLM->>Tool: Call upstox_place_order(symbol="TCS", qty=1, price=3850)
+    Tool->>Tool: Create UUID confirmation_id & asyncio.Future
+    Tool->>TG: Send Inline Keyboard: [✅ Confirm] [❌ Cancel]
+    Tool->>Tool: await asyncio.wait_for(future, timeout=300)
+    
+    alt User clicks [✅ Confirm]
+        Trader->>TG: Clicks [✅ Confirm]
+        TG->>Tool: CallbackQuery -> future.set_result("confirm")
+        Tool->>Upstox: PlaceOrderV3Request(...)
+        Upstox-->>Tool: 200 OK (order_id: 2608210099)
+        Tool-->>LLM: "Order successful! Upstox Response: ..."
+        LLM-->>Trader: "Order placed successfully for 1 share of TCS at ₹3850."
+    else User clicks [❌ Cancel]
+        Trader->>TG: Clicks [❌ Cancel]
+        TG->>Tool: CallbackQuery -> future.set_result("cancel")
+        Tool-->>LLM: "User cancelled the order."
+        LLM-->>Trader: "Order was cancelled as requested."
+    end
+```
 
 ---
 
-## Telegram Bot Interface & Available Commands
+## 4. Hybrid Live vs Sandbox Mode (Mock State Manager)
 
-The system provides a Telegram Bot interface (`src/api/telegram_bot.py`) that differs significantly from the Web UI:
-- **Admin Restriction**: The bot restricts access using the `ADMIN_CHAT_ID` mechanism. It locks to the first user if undefined, providing personalized security.
-- **Quiet Execution**: The Telegram Bot uses FastAPI `BackgroundTasks` to execute the agent graph quietly, suppressing intermediate reasoning logs and raw tool calls to provide a cleaner chat experience, whereas the Web UI streams all granular reasoning steps via Server-Sent Events (SSE).
-- **Interactive Confirmations**: Trades are confirmed via Telegram Inline Keyboard Buttons (Callback Queries) natively in the chat UI.
-- **No Direct Login Command**: Note that there is no native `/login` command inside the Telegram bot. To retrieve your login token, you must execute the script `generate_live_token.py` on the server terminal and authorize via browser.
+```mermaid
+graph TD
+    UserQuery["User Portfolio / Order Request"] --> ModeCheck{Session Mode?}
+    
+    ModeCheck -- Live Mode --> LiveBroker["🏦 Upstox Live Trading API<br/>(Real Broker Account)"]
+    
+    ModeCheck -- Sandbox Mode --> MockRegistry["🧪 DeepTrade Mock State Manager<br/>(src/agent/sandbox_registry.py)"]
+    MockRegistry --> VirtualFunds["💰 ₹1,000,000 Virtual Cash Ledger"]
+    MockRegistry --> VirtualPositions["📊 Simulated Positions (sandbox_db.json)"]
+    MockRegistry --> VirtualOrderBook["📑 Simulated Order History"]
+    MockRegistry -.->|Fetches Real Prices| RealLTP["📈 Live Upstox Market LTP"]
+```
 
-### Supported Telegram Commands
-- `/start` or `/help` - Shows the welcome message and lists available commands.
-- `/new` - Clears the current thread context and database memory, starting a fresh conversation.
-- `/sandbox` - Switches the user session into Sandbox Mode (simulated orders).
-- `/live` - Switches the user session into Live Mode (real money orders).
-- `/analyse <ticker>` - Initiates a comprehensive financial analysis on a specific stock.
-- `/news <topic>` - Fetches and summarizes the latest news for a given ticker or topic.
-- `/deepdive <topic>` - Conducts an in-depth research report.
+### Why DeepTrade Implements a Custom Sandbox Registry:
+The official Upstox Sandbox API only supports order placement and modification—it lacks endpoints for checking simulated funds, positions, and order history.
+
+DeepTrade overcomes this limitation with `src/agent/sandbox_registry.py`:
+1. **Real Market Pricing in Sandbox**: Uses the real `UPSTOX_ANALYTICS_TOKEN` to pull actual live prices for paper trades.
+2. **Virtual Capital Ledger**: Initializes with ₹1,000,000 virtual balance. Simulated BUY/SELL orders update virtual cash and positions in `sandbox_db.json`.
+3. **Isolated Portfolio Views**: Querying `/sandbox` holdings or positions reflects your paper trading ledger without touching real money.
 
 ---
 
-## Sandbox vs Live Mode (Upstox SDK Limitations)
+## 5. Supported Telegram Commands
 
-The Upstox Developer API (SDK) does not provide a 1:1 mirror of a real account in its Sandbox environment. 
-
-### Natively Supported by Sandbox API
-The Upstox Sandbox API **only** supports order execution functions:
-- Placing Orders (`PlaceOrderV3Request`)
-- Modifying Orders (`ModifyOrderRequest`)
-- Cancelling Orders
-
-### Missing Sandbox Functionality (Simulated by DeepTrade)
-The Upstox Sandbox lacks dedicated endpoints for portfolio management, funds, and market data. To tackle this, DeepTrade implements a **Hybrid Sandbox Simulation** (`src/agent/upstox_client_manager.py`):
-
-1. **Market Data (`MarketQuoteV3Api`, `HistoryV3Api`)**: 
-   - Sandbox lacks market data support. DeepTrade hardcodes these requests to always use the real `UPSTOX_ANALYTICS_TOKEN` so the bot can research real-time prices even while paper trading.
-2. **Holdings & Positions (`PortfolioApi`)**:
-   - Sandbox has no isolated paper portfolio. The `get_portfolio_api()` function is hardcoded to use the LIVE API client. When in sandbox mode, you will see your *real* holdings and open positions.
-3. **Funds (`UserApi`)**:
-   - Sandbox does not simulate an isolated paper-money balance. `get_user_api()` fetches your actual real-world fund balance.
-4. **Order Book (`OrderApi`)**:
-   - Because the bot fetches the global order book (`upstox_get_order_book`) from the Live API, any simulated sandbox orders will *not* appear in the order book query results. 
-
-**Summary:** When switching to `/sandbox`, the bot continues to read real-world data (real prices, real portfolio, real funds), but selectively routes all write actions (Buy/Sell/Cancel) to the simulated Sandbox API.
+| Command | Description |
+| :--- | :--- |
+| `/start` or `/help` | Shows welcome message, bot status, and command list. |
+| `/new` | Clears conversation state and memory checkpoint in PostgreSQL. |
+| `/sandbox` | Switches the user session into Sandbox Mode (simulated paper trading). |
+| `/live` | Switches the user session into Live Mode (real money orders). |
+| `/analyse <ticker>` | Initiates comprehensive technical & fundamental equity research. |
+| `/news <topic>` | Fetches and summarizes latest news and catalysts for a ticker/topic. |
+| `/deepdive <topic>` | Conducts an exhaustive multi-agent research report. |

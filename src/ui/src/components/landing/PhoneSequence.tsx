@@ -64,25 +64,25 @@ const PhoneSequence: React.FC = () => {
       const isMobile = window.innerWidth < 768;
 
       if (isMobile) {
-        // MOBILE: Scale the phone for mobile view
-        const scale = (canvas.height * 0.5) / img.height; 
+        // MOBILE: Scale the phone, shift it slightly right
+        const scale = (canvas.height * 0.5) / img.height;
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
-        const x = (canvas.width / 2) - (drawWidth / 2);
-        // Position it resting at the bottom
+        // Shift right: center + 10% of canvas width
+        const x = (canvas.width / 2) - (drawWidth / 2) + (canvas.width * 0.08);
         const y = canvas.height - drawHeight + (canvas.height * 0.05);
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, x, y, drawWidth, drawHeight);
       } else {
-        // DESKTOP: Right side, centered vertically
+        // DESKTOP: Shifted right — range [82%→68%] instead of [75%→60%]
         const scale = Math.min(canvas.width / img.width, (canvas.height * 0.9) / img.height);
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
         
         const progress = index / (frameUrls.length - 1 || 1);
-        const startRatio = 0.75;
-        const endRatio = 0.60;
+        const startRatio = 0.82;
+        const endRatio = 0.68;
         const currentRatio = startRatio - ((startRatio - endRatio) * progress);
         
         const x = (canvas.width * currentRatio) - (drawWidth / 2);
@@ -160,29 +160,32 @@ const PhoneSequence: React.FC = () => {
 
         {/* GAP AFTER HEADING — clamp: 16px on small screens → 30px on large */}
         <h2
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal"
-          style={{ fontFamily: 'Lastik, serif', textShadow: '0 4px 20px rgba(0,0,0,0.8)', marginBottom: 'clamp(16px, 3vh, 30px)' }}
+          className="font-normal"
+          style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)', textShadow: '0 4px 20px rgba(0,0,0,0.8)', marginBottom: 'clamp(16px, 3vh, 30px)' }}
         >
           <FlipText delay={0.2} together={false} duration={10}>Trade Anywhere.</FlipText>
         </h2>
         
         {/* GAP AFTER PARAGRAPH — clamp: 16px on small screens → 32px on large */}
         <p
-          className="text-zinc-400 text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed"
+          className="text-zinc-400 text-lg md:text-xl leading-snug"
+          style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)', marginBottom: 'clamp(12px, 2vh, 16px)' }}
+        >
+          Execute orders, receive intelligence, and manage risk directly from your <LineHoverLink variant="pulse">Telegram app</LineHoverLink>. 
+        </p>
+
+        <p
+          className="text-zinc-400 text-lg md:text-xl leading-snug"
           style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)', marginBottom: 'clamp(16px, 3vh, 32px)' }}
         >
-          Execute orders, receive intelligence, and manage risk directly from your <LineHoverLink variant="pulse">Telegram app</LineHoverLink>. No heavy UI required.
+          Connects directly to your own Upstox account via secure OAuth — the same account you already trade on, no separate sign-up.
         </p>
 
         {/* GAP AFTER SUPERVISOR SECTION — clamp: 16px on small screens → 32px on large */}
-        <div className="space-y-4" style={{ marginBottom: 'clamp(16px, 3vh, 32px)' }}>
+        <div className="hidden md:block space-y-4" style={{ marginBottom: 'clamp(16px, 3vh, 32px)' }}>
             <h3 className="text-xs tracking-[0.2em] text-[#54A1FD] uppercase font-semibold">The Supervisor Agent</h3>
             <p className="text-zinc-300 text-sm leading-relaxed md:text-base">
-              Powered exclusively by a <LineHoverLink variant="strike">monolithic</LineHoverLink> <LineHoverLink variant="sweep">Supervisor</LineHoverLink> architecture. 
-              No fragile subagent handoffs. A single, omniscient intelligence handles everything from technical analysis to secure order execution.
-            </p>
-            <p className="text-zinc-500 text-[11px] md:text-xs mt-4 italic">
-              Built on the ultra-low latency <LineHoverLink href="https://deepagents.io" target="_blank" variant="pulse" className="text-zinc-300 not-italic font-medium">DeepAgents framework</LineHoverLink>.
+              One agent, not a black box. Every reasoning step, market lookup, and tool call streams to you in real time — and every trade requires your explicit confirmation before a single order touches your account. Nothing executes without you seeing it first.
             </p>
         </div>
 

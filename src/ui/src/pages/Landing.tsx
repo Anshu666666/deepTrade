@@ -8,16 +8,49 @@ import TypingKeyboard from '../components/ui/typing-keyboard';
 import { gsap } from 'gsap';
 import macbookImg from '../assets/MacBook Pro.png';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
 
 gsap.registerPlugin(ScrollTrigger);
 
 import { StarsBackground } from '../components/animate-ui/components/backgrounds/stars';
+import { LogoSlider } from '../components/ui/logo-slider';
+import { AnimatedFooter } from '../components/ui/animated-footer';
+import { GlobeAnalytics } from '../components/ui/cobe-globe-analytics';
+import logoDeepagents from '../assets/logos/logo-deepagents.png';
+import logoSupabase from '../assets/logos/logo-supabas.png';
+import logoTelegram from '../assets/logos/logo-telegram.png';
+import logoUpstox from '../assets/logos/logo-upstox.png';
+import logoExa from '../assets/logos/logo-exa.png';
+import logoValyu from '../assets/logos/logo-valyu.png';
+import VaultLock from '../components/forgeui/vault-lock';
+import authenticatorIphoneImg from '../assets/authenticator-iphone.png';
 
 const Landing: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const section3Ref = useRef<HTMLDivElement>(null);
   const keyboardRef = useRef<HTMLDivElement>(null);
+  const headerLogoRef = useRef<HTMLDivElement>(null);
+  const headerBtnRef = useRef<HTMLDivElement>(null);
+
+  // GSAP Smooth Scroll Setup
+  useEffect(() => {
+    const lenis = new Lenis();
+
+    lenis.on('scroll', ScrollTrigger.update);
+
+    const raf = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+
+    gsap.ticker.add(raf);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      lenis.destroy();
+      gsap.ticker.remove(raf);
+    };
+  }, []);
 
   // Adjust video speed as requested
   useEffect(() => {
@@ -44,6 +77,22 @@ const Landing: React.FC = () => {
       tl.to(keyboardRef.current, { yPercent: 0, duration: 0.2, ease: "power1.in" });
     });
 
+    // Header logo + btn inward animation — ends by 50% of scroll into section 2
+    const logoEl = headerLogoRef.current;
+    const btnEl  = headerBtnRef.current;
+    if (logoEl && btnEl) {
+      gsap.fromTo(logoEl,
+        { paddingLeft: 'clamp(16px, 4vw, 64px)' },
+        { paddingLeft: 'clamp(24px, 6vw, 96px)', ease: 'power2.out',
+          scrollTrigger: { trigger: document.body, start: 'top top', end: '+=50vh', scrub: 0.6 } }
+      );
+      gsap.fromTo(btnEl,
+        { paddingRight: 'clamp(16px, 4vw, 64px)' },
+        { paddingRight: 'clamp(24px, 6vw, 96px)', ease: 'power2.out',
+          scrollTrigger: { trigger: document.body, start: 'top top', end: '+=50vh', scrub: 0.6 } }
+      );
+    }
+
     return () => ctx.revert();
   }, []);
 
@@ -54,6 +103,28 @@ const Landing: React.FC = () => {
       <div className="fixed inset-0 z-40 pointer-events-none mix-blend-screen">
         <StarsBackground starColor="#ffffff" speed={30} className="opacity-60" />
       </div>
+
+      {/* Top Navigation — Glassmorphism */}
+      <header
+        className="fixed top-0 left-0 w-full flex justify-between items-center box-border"
+        style={{
+          zIndex: 999,
+          background: 'rgba(0,0,0,0.35)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          padding: 'clamp(10px, 1.5vh, 20px) 0',
+        }}
+      >
+        <div ref={headerLogoRef} className="flex items-center" style={{ paddingLeft: 'clamp(16px, 4vw, 64px)' }}>
+          <span className="text-white text-xl md:text-2xl font-semibold tracking-wider select-none">DeepTrade</span>
+        </div>
+        <div ref={headerBtnRef} className="flex items-center" style={{ paddingRight: 'clamp(16px, 4vw, 64px)' }}>
+          <Link to="/login" className="no-underline">
+            <CandyButton>Initialize Terminal</CandyButton>
+          </Link>
+        </div>
+      </header>
 
       {/* SECTION 1: HERO */}
       <div ref={heroRef} className="relative h-[100dvh] overflow-hidden text-white bg-black z-50" style={{ fontFamily: '"SF Pro Display", sans-serif' }}>
@@ -69,92 +140,231 @@ const Landing: React.FC = () => {
         <source src={videoSrc} type="video/mp4" />
       </video>
 
-      {/* Top Navigation - Fixed & Transparent */}
-      <header className="fixed top-0 left-0 w-full z-20 px-6 py-4 md:px-16 md:py-6 flex justify-between items-center bg-transparent box-border">
-        <div className="text-xl md:text-2xl font-semibold tracking-wider">
-          DeepTrade
-        </div>
-      </header>
-
       {/* Hero Content */}
       <div className="absolute inset-0 z-10 flex flex-col justify-center items-center px-6 md:px-8">
         
         <h1 
-          className="text-[2.5rem] leading-[1.1] md:text-[5rem] text-center m-0 font-normal tracking-tight" 
-          style={{ fontFamily: 'Lastik, serif', textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+          className="leading-[1.1] text-center m-0 font-normal tracking-tight" 
+          style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)', textShadow: '0 8px 40px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.6)' }}
         >
           Where intuition meets
           <br />
           <MorphText texts={['intelligence.', 'markets.', 'execution.']} />
         </h1>
 
-        <p className="text-zinc-200 text-base md:text-lg max-w-[600px] text-center mt-6 mb-10 md:mb-12 leading-relaxed tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-          We design tools for deep thinkers, bold traders, and quiet rebels. Amid the noise of the market, we build autonomous agents for sharp focus and inspired research.
+        <p className="text-zinc-200 text-lg md:text-xl max-w-[600px] text-center mt-6 mb-10 md:mb-12 leading-tight tracking-wide" style={{ textShadow: '0 4px 25px rgba(0,0,0,0.8), 0 2px 12px rgba(0,0,0,0.6)' }}>
+          DeepTrade is an intelligent trading bot for individual investors — one AI that researches markets, reasons in the open, and executes real trades on your Upstox account only when you say so.
         </p>
 
-        <Link to="/login" className="no-underline">
-          <CandyButton className="px-6 py-3 text-sm text-white rounded-xl w-auto inline-flex items-center justify-center">
-            Initialize Terminal
-          </CandyButton>
-        </Link>
       </div>
 
       {/* Bottom Text - Centered and Raised */}
-      <div className="absolute bottom-12 md:bottom-20 left-0 w-full px-6 flex flex-col md:flex-row justify-center items-center gap-4 md:gap-12 z-10 box-border pointer-events-none">
+      <div className="absolute bottom-12 md:bottom-20 left-0 w-full px-6 flex flex-col md:flex-row justify-center items-center gap-4 md:gap-12 z-20 box-border pointer-events-none" style={{ textShadow: '0 4px 15px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.6)' }}>
         <div className="text-white/70 text-[0.7rem] md:text-xs tracking-widest uppercase flex flex-col md:flex-row gap-2 md:gap-6 items-center text-center">
-          <span>Real-time Market Intelligence</span>
+          <span>Deep Financial Research</span>
           <span className="hidden md:block w-1 h-1 rounded-full bg-white/30"></span>
-          <span>Deep SEC Filing Analysis</span>
+          <span>Transparent, Confirmed Execution</span>
         </div>
         
         <div className="hidden md:block w-1 h-1 rounded-full bg-white/50"></div>
         
         <div className="text-white/70 text-[0.7rem] md:text-xs tracking-widest uppercase flex flex-col md:flex-row gap-2 md:gap-6 items-center text-center">
-          <span>Privacy First Architecture</span>
+          <span>Open Source · Any LLM</span>
           <span className="hidden md:block w-1 h-1 rounded-full bg-white/30"></span>
           <span>Built for Individual Traders</span>
         </div>
       </div>
 
-      {/* Bottom Vignette for Section 1 */}
-      <div className="absolute bottom-0 left-0 w-full h-[40dvh] bg-gradient-to-t from-black via-black/80 to-transparent z-10 pointer-events-none" />
+      {/* Bottom Vignette for Section 1 — height scales with viewport */}
+      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent z-10 pointer-events-none" style={{ height: 'clamp(180px, 30dvh, 380px)' }} />
       </div>
 
       {/* SECTION 2: PHONE SEQUENCE */}
       <PhoneSequence />
 
-      {/* SECTION 3: THE ENGINE (Triggers Keyboard) */}
-      <div ref={section3Ref} className="relative min-h-[100dvh] bg-black text-white flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 z-30 mt-[-100dvh] overflow-hidden gap-32 md:gap-0 pt-16 md:pt-0">
+      {/* SECTIONS 3 & 4 WRAPPER (Triggers Keyboard) */}
+      <div ref={section3Ref} className="relative bg-black text-white z-30 mt-[-100dvh] overflow-hidden">
         
-        {/* Pale Blurry Circular Gradient (Only in Section 3) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-white/[0.03] rounded-full blur-[100px] pointer-events-none z-0" />
-        
-        {/* Video & MacBook Container */}
-        <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:left-[8%] lg:left-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center">
-          {/* Video Placeholder */}
-          <div className="w-full aspect-video bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
-            <span className="text-zinc-500 font-mono text-sm md:text-base tracking-widest uppercase text-center px-4">Video Placeholder</span>
-          </div>
-
-          {/* MacBook Mockup */}
-          <img 
-            src={macbookImg} 
-            alt="MacBook Mockup" 
-            className="absolute -bottom-20 -left-4 md:-bottom-24 md:-left-16 lg:-bottom-32 lg:-left-24 w-44 md:w-64 lg:w-[400px] object-contain z-20 pointer-events-none drop-shadow-2xl"
+        {/* LOGO SLIDER SECTION */}
+        <div className="relative z-20 bg-black pt-32 pb-20 md:pt-20 md:pb-28 flex flex-col items-center justify-center">
+          <p className="text-zinc-500 text-xs md:text-sm uppercase tracking-[0.2em] mb-12 font-medium text-center">Made with</p>
+          <LogoSlider
+            logos={[
+              <div key="gap1" />,
+              <a key="1" href="https://pypi.org/project/deepagents/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoDeepagents} alt="Deepagents" className="object-contain w-[140px] md:w-[180px] max-w-none" /></a>,
+              <div key="gap2" />,
+              <a key="2" href="https://supabase.com/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoSupabase} alt="Supabase" className="object-contain w-[180px] md:w-[240px] max-w-none scale-110" /></a>,
+              <div key="gap3" />,
+              <a key="3" href="https://telegram.org/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoTelegram} alt="Telegram" className="object-contain w-[180px] md:w-[220px] max-w-none scale-110" /></a>,
+              <div key="gap4" />,
+              <a key="4" href="https://upstox.com/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoUpstox} alt="Upstox" className="object-contain w-[120px] md:w-[150px] max-w-none" /></a>,
+              <div key="gap5" />,
+              <a key="5" href="https://exa.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoExa} alt="Exa" className="object-contain w-[120px] md:w-[150px] max-w-none brightness-200" /></a>,
+              <div key="gap6" />,
+              <a key="6" href="https://valyu.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoValyu} alt="Valyu" className="object-contain w-[130px] md:w-[165px] max-w-none brightness-200" /></a>,
+              <div key="gap7" />,
+              <a key="7" href="https://pypi.org/project/deepagents/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoDeepagents} alt="Deepagents" className="object-contain w-[140px] md:w-[180px] max-w-none" /></a>,
+              <div key="gap8" />,
+              <a key="8" href="https://supabase.com/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoSupabase} alt="Supabase" className="object-contain w-[180px] md:w-[240px] max-w-none scale-110" /></a>,
+              <div key="gap9" />,
+              <a key="9" href="https://telegram.org/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoTelegram} alt="Telegram" className="object-contain w-[180px] md:w-[220px] max-w-none scale-110" /></a>,
+              <div key="gap10" />,
+              <a key="10" href="https://upstox.com/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoUpstox} alt="Upstox" className="object-contain w-[120px] md:w-[150px] max-w-none" /></a>,
+              <div key="gap11" />,
+              <a key="11" href="https://exa.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoExa} alt="Exa" className="object-contain w-[120px] md:w-[150px] max-w-none brightness-200" /></a>,
+              <div key="gap12" />,
+              <a key="12" href="https://valyu.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoValyu} alt="Valyu" className="object-contain w-[130px] md:w-[165px] max-w-none brightness-200" /></a>,
+            ]}
+            speed={60}
           />
         </div>
+        
+        {/* Pale Blurry Circular Gradients */}
+        <div className="absolute top-[25%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-white/[0.03] rounded-full blur-[100px] pointer-events-none z-0" />
+        <div className="absolute top-[75%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-white/[0.03] rounded-full blur-[100px] pointer-events-none z-0" />
 
-        {/* Text Section */}
-        <div className="max-w-xl w-full text-center md:text-right z-10 relative md:w-[45%] pb-16 md:pb-0">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-normal mb-6" style={{ fontFamily: 'Lastik, serif' }}>
-            The Autonomous Analyst.
-          </h2>
-          <p className="text-zinc-400 text-lg leading-relaxed md:text-xl">
-            DeepTrade doesn't just display data—it reasons through it. 
-            Our agentic architecture writes code, executes queries, and synthesizes 
-            market intelligence on the fly.
-          </p>
+        {/* SECTION 3: THE ENGINE */}
+        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-32 md:gap-0 pt-16 md:pt-0">
+          {/* Top vignette — same gradient as Section 1 bottom */}
+          <div className="absolute top-0 left-0 w-full h-[30dvh] bg-gradient-to-b from-black via-black/80 to-transparent z-10 pointer-events-none" />
+          {/* Video & MacBook Container */}
+          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:left-[8%] lg:left-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center">
+            {/* Video Placeholder */}
+            <div className="w-full aspect-video bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
+              <span className="text-zinc-500 font-mono text-sm md:text-base tracking-widest uppercase text-center px-4">Video Placeholder</span>
+            </div>
+
+            {/* MacBook Mockup */}
+            <img 
+              src={macbookImg} 
+              alt="MacBook Mockup" 
+              className="absolute -bottom-20 -left-4 md:-bottom-24 md:-left-16 lg:-bottom-32 lg:-left-24 w-44 md:w-64 lg:w-[400px] object-contain z-20 pointer-events-none drop-shadow-2xl"
+            />
+          </div>
+
+          {/* Text Section */}
+          <div className="max-w-xl w-full text-center md:text-right z-10 relative md:w-[45%] pb-16 md:pb-0">
+            <h2 
+              className="font-normal mb-6" 
+              style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
+            >
+              The Autonomous Analyst.
+            </h2>
+            <p className="text-zinc-400 text-lg leading-snug md:text-xl">
+              DeepTrade doesn't just display data — it researches it. Powered by Exa for real-time web intelligence and Valyu for financial datasets and filings, the agent pulls from both and synthesizes it into one clear answer, not a wall of raw numbers.
+            </p>
+          </div>
         </div>
+
+        {/* SECTION 4: OPEN BY DESIGN */}
+        {/* ─── Tuning knobs — change these to adjust spacing ─────────────────
+              --s4-label-gap      : gap below the "OPEN SOURCE · …" label row
+              --s4-heading-gap    : gap below the h2 heading
+              --s4-para-gap       : vertical gap between the two paragraphs
+              --s4-line-height    : line-height of body paragraphs
+              --s4-label-tracking : letter-spacing of the label row
+        ──────────────────────────────────────────────────────────────────── */}
+        <div
+          className="relative min-h-[100dvh] flex flex-col items-center justify-center px-8 md:px-12 lg:px-24 text-center"
+          style={{
+            '--s4-label-gap':      'clamp(1.5rem, 3vw, 2.5rem)',
+            '--s4-heading-gap':    'clamp(1.75rem, 3.5vw, 3rem)',
+            '--s4-para-gap':       'clamp(1.25rem, 2.5vw, 2rem)',
+            '--s4-line-height':    '1.35',
+            '--s4-label-tracking': '0.2em',
+          } as React.CSSProperties}
+        >
+          <div className="max-w-3xl w-full flex flex-col items-center z-10 relative">
+
+            {/* Label row */}
+            <div
+              className="text-white/70 text-[0.7rem] md:text-xs uppercase flex flex-col md:flex-row gap-2 md:gap-4 items-center text-center"
+              style={{ letterSpacing: 'var(--s4-label-tracking)', marginBottom: 'var(--s4-label-gap)' }}
+            >
+              <span>OPEN SOURCE</span>
+              <span className="hidden md:block w-1 h-1 rounded-full bg-white/30" />
+              <span>MODEL-AGNOSTIC</span>
+              <span className="hidden md:block w-1 h-1 rounded-full bg-white/30" />
+              <span>LOCAL OR CLOUD</span>
+            </div>
+
+            {/* Heading */}
+            <h2
+              className="font-normal"
+              style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)', marginBottom: 'var(--s4-heading-gap)' }}
+            >
+              Open By Design.
+            </h2>
+
+            {/* Body copy */}
+            <div
+              className="text-zinc-400 text-base md:text-lg max-w-2xl flex flex-col"
+              style={{ lineHeight: 'var(--s4-line-height)', gap: 'var(--s4-para-gap)' }}
+            >
+              <p className="m-0">
+                DeepTrade is fully open-source — audit it, fork it, make it yours. Bring
+                your own model through OpenRouter, whether that's Claude, GPT, or an
+                open-weight LLM, and run it wherever you want: locally on your own machine,
+                or deployed to any cloud. The cost and the control are entirely yours.
+              </p>
+              <p className="m-0">
+                Bring your own model — the LLM is yours to choose. Order execution runs
+                on the official Upstox API, so every trade is placed through Upstox's own
+                infrastructure, not a third-party intermediary.
+              </p>
+            </div>
+
+            {/* Globe Container - Absolute at bottom right */}
+            <div className="absolute -bottom-56 -right-20 md:-bottom-80 md:-right-56 lg:-bottom-[420px] lg:-right-[320px] w-60 md:w-[360px] lg:w-[560px] z-[-1] pointer-events-auto opacity-70">
+              <GlobeAnalytics />
+            </div>
+
+          </div>
+        </div>
+
+        {/* END SECTION 4 */}
+
+        {/* SECTION 5: SECURITY & SANDBOX */}
+        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-32 md:gap-0 pt-16 md:pt-0 pb-16">
+          
+          {/* Text Section (Left) */}
+          <div className="max-w-xl w-full text-center md:text-left z-10 relative md:w-[45%] md:ml-12 lg:ml-24">
+            <h2 
+              className="font-normal mb-6" 
+              style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
+            >
+              Fortified Freedom.
+            </h2>
+            <p className="text-zinc-400 text-lg leading-snug md:text-xl mb-6">
+              Trade with confidence. DeepTrade is guarded by a rigorous 7-day Time-Based One-Time Password (TOTP) cycle, ensuring your active session remains yours alone.
+            </p>
+            <p className="text-zinc-400 text-lg leading-snug md:text-xl">
+              Not ready to risk capital? Engage the Sandbox Mock Registry. The agent simulates real market executions with a virtual portfolio, letting you pressure-test strategies with zero financial exposure.
+            </p>
+          </div>
+
+          {/* Visuals Container (Right) */}
+          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:right-[8%] lg:right-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-12 md:mt-0">
+            {/* Vault Component */}
+            <div className="w-full flex items-center justify-center relative z-10">
+              <VaultLock 
+                className="w-full lg:w-[650px]" 
+                cardTitle="TOTP Authenticator"
+                cardDescription="Scan the QR code to link your account. 7-day rolling sessions secured by time-based one-time passwords."
+              />
+            </div>
+
+            {/* iPhone Mockup (Acts as the MacBook equivalent) */}
+            <img 
+              src={authenticatorIphoneImg} 
+              alt="Authenticator App on iPhone" 
+              className="absolute -bottom-28 -right-8 md:-bottom-32 md:-right-24 lg:-bottom-48 lg:-right-32 w-44 md:w-64 lg:w-[400px] object-contain z-20 pointer-events-none drop-shadow-2xl"
+            />
+          </div>
+        </div>
+
+        {/* Spacer to add gap between Section 5 and Footer */}
+        <div className="w-full h-32 md:h-48 lg:h-[250px] pointer-events-none" />
       </div>
 
       {/* POP-UP TYPING KEYBOARD */}
@@ -164,6 +374,26 @@ const Landing: React.FC = () => {
         style={{ transform: 'scale(0.6) translateY(100%)' }}
       >
         <TypingKeyboard />
+      </div>
+
+      {/* FOOTER */}
+      <div className="relative min-h-[50dvh] w-full z-30" style={{ height: 'clamp(400px, 55dvh, 650px)' }}>
+        <AnimatedFooter
+          headingLines={["Think. Analyse. Trade."]}
+          leftImage="/footer-left.jpg"
+          rightImage="/footer-right.jpg"
+          background="#000000"
+          textColor="#ffffff"
+          charColor="#803500"
+          hoverColor="#ff6a00"
+          links={[
+            { label: "GitHub", href: "https://github.com/Anshu666666/deepTrade" },
+            { label: "Docs",   href: "https://github.com/Anshu666666/deepTrade/blob/master/README.md" },
+            { label: "Made by Anshu666666", href: "https://www.linkedin.com/in/anshuman-biswas-iiitk/" },
+          ]}
+          copyright={`© ${new Date().getFullYear()} DeepTrade · MIT License`}
+          revealOnScroll
+        />
       </div>
 
     </div>

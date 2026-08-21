@@ -1,10 +1,18 @@
+import sys
 import os
 import asyncio
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 import json
 import uuid
 import re
 from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
+from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, Depends, Response
+import pyotp
+import jwt
+import datetime
 from fastapi.responses import StreamingResponse, HTMLResponse
 import requests
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,8 +105,62 @@ app.post("/webhook/telegram")(telegram_webhook_endpoint)
 
 class ChatRequest(BaseModel):
     message: str
+    command: Optional[str] = None
     thread_id: Optional[str] = None
     hidden_instruction: Optional[str] = None
+
+def get_current_user(request: Request):
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        jwt_secret = os.environ.get("JWT_SECRET", "default-dev-secret-key-must-be-32-bytes-long")
+        payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+        if payload.get("sub") != "admin":
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return payload
+    except Exception:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+class LoginRequest(BaseModel):
+    code: str
+
+@app.post("/api/auth/login")
+async def login(request: LoginRequest, response: Response):
+    secret = os.environ.get("WEB_OTP_SECRET")
+    if not secret:
+        raise HTTPException(status_code=500, detail="WEB_OTP_SECRET not set in .env")
+        
+    totp = pyotp.TOTP(secret)
+    if totp.verify(request.code, valid_window=1):
+        jwt_secret = os.environ.get("JWT_SECRET", "default-dev-secret-key-must-be-32-bytes-long")
+        expiration = datetime.datetime.utcnow() + datetime.timedelta(days=7)
+        token = jwt.encode({"sub": "admin", "exp": expiration}, jwt_secret, algorithm="HS256")
+        
+        response.set_cookie(
+            key="auth_token",
+            value=token,
+            httponly=True,
+            max_age=7 * 24 * 60 * 60,
+            samesite="lax",
+            secure=False
+        )
+        return {"status": "success", "message": "Logged in successfully"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid code")
+
+@app.post("/api/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie("auth_token")
+    return {"status": "success"}
+
+@app.get("/api/auth/status")
+async def auth_status(request: Request):
+    try:
+        get_current_user(request)
+        return {"authenticated": True}
+    except HTTPException:
+        return {"authenticated": False}
 
 
 def _is_supervisor_response(last_msg, node_name: str) -> bool:
@@ -212,37 +274,43 @@ async def generate_sse_events(query_id: str, request: ChatRequest):
 
     # Intercept commands
     msg_text = request.message.strip()
-    if msg_text.startswith("/sandbox"):
-        if request.thread_id:
-            thread_sandbox_modes[request.thread_id] = True
-            await queue.put(f"data: {json.dumps({'type': 'log', 'log_type': 'RESPONSE', 'agent': 'System', 'content': '🔄 **Mode Switched:** You are now in **Sandbox Mode**. All orders will be simulated and no real money will be used.'})}\n\n")
-        await queue.put(f"data: {json.dumps({'type': 'done'})}\n\n")
-        yield await queue.get()
-        yield await queue.get()
-        return
+    cmd = request.command
 
-    if msg_text.startswith("/live"):
+    if cmd == "/toggle":
         if request.thread_id:
-            thread_sandbox_modes[request.thread_id] = False
-            await queue.put(f"data: {json.dumps({'type': 'log', 'log_type': 'RESPONSE', 'agent': 'System', 'content': '⚠️ **Mode Switched:** You are now in **LIVE Mode**. All orders will be placed on your actual Upstox account. Proceed with caution!'})}\n\n")
-        await queue.put(f"data: {json.dumps({'type': 'done'})}\n\n")
-        yield await queue.get()
-        yield await queue.get()
-        return
-        
-    if msg_text.startswith("/new"):
+            if request.thread_id not in thread_sandbox_modes:
+                mode_str = await db.get_setting(f"mode_{request.thread_id}")
+                thread_sandbox_modes[request.thread_id] = (mode_str == "sandbox")
+            
+            new_mode = not thread_sandbox_modes[request.thread_id]
+            thread_sandbox_modes[request.thread_id] = new_mode
+            await db.set_setting(f"mode_{request.thread_id}", "sandbox" if new_mode else "live")
+            
+            if new_mode:
+                msg = '🔄 **Mode Switched:** You are now in **Sandbox Mode**. All orders will be simulated and no real money will be used.'
+            else:
+                msg = '⚠️ **Mode Switched:** You are now in **LIVE Mode**. All orders will be placed on your actual Upstox account. Proceed with caution!'
+                
+            if not msg_text:
+                await queue.put(f"data: {json.dumps({'type': 'log', 'log_type': 'RESPONSE', 'agent': 'System', 'content': msg})}\n\n")
+                await queue.put(f"data: {json.dumps({'type': 'done'})}\n\n")
+                yield await queue.get()
+                yield await queue.get()
+                return
+
+    elif cmd == "/new":
         await queue.put(f"data: {json.dumps({'type': 'log', 'log_type': 'RESPONSE', 'agent': 'System', 'content': 'Context cleared! Please start a new conversation.'})}\n\n")
         await queue.put(f"data: {json.dumps({'type': 'done'})}\n\n")
         yield await queue.get()
         yield await queue.get()
         return
 
-    if msg_text.startswith("/news"):
-        topic = msg_text.replace("/news", "").strip()
-        msg_text = f"Fetch and summarize the latest news for: {topic}" if topic else "Fetch and summarize the latest news."
-    elif msg_text.startswith("/deepdive"):
-        topic = msg_text.replace("/deepdive", "").strip()
-        msg_text = f"Conduct a comprehensive, deep-dive research report on: {topic}" if topic else "Conduct a comprehensive, deep-dive research report."
+    if cmd == "/news":
+        msg_text = f"Fetch and summarize the latest news for: {msg_text}" if msg_text else "Fetch and summarize the latest news."
+    elif cmd == "/deepdive":
+        msg_text = f"Conduct a comprehensive, deep-dive research report on: {msg_text}" if msg_text else "Conduct a comprehensive, deep-dive research report."
+    elif cmd == "/analyse":
+        msg_text = f"Perform a comprehensive financial analysis on: {msg_text}" if msg_text else "Perform a comprehensive financial analysis."
     
     messages = []
     if request.hidden_instruction:
@@ -253,19 +321,23 @@ async def generate_sse_events(query_id: str, request: ChatRequest):
     config = {"configurable": {"thread_id": thread_id, "platform": "web", "sse_queue": queue}}
     
     # Set the thread mode before running
-    is_sandbox = thread_sandbox_modes.get(thread_id, False)
+    if thread_id not in thread_sandbox_modes:
+        mode_str = await db.get_setting(f"mode_{thread_id}")
+        thread_sandbox_modes[thread_id] = (mode_str == "sandbox")
+        
+    is_sandbox = thread_sandbox_modes[thread_id]
     is_sandbox_mode.set(is_sandbox)
     
+    mode_msg = "SYSTEM NOTIFICATION: You are currently operating in SANDBOX (Paper Trading) mode. All orders are simulated." if is_sandbox else "SYSTEM NOTIFICATION: You are currently operating in LIVE (Real Money) mode. All orders will be placed on your actual Upstox account."
+    messages.insert(0, SystemMessage(content=mode_msg))
+    
     if not is_sandbox:
-        token_status = await db.get_live_token_status()
-        if not token_status["is_valid"]:
-            import os
-            client_id = os.environ.get("UPSTOX_CLIENT_ID", "")
-            webhook_domain = await db.get_setting("WEBHOOK_DOMAIN") or ""
-            redirect_uri = f"{webhook_domain}/upstox/callback"
-            auth_url = f"https://api.upstox.com/v2/login/authorization/dialog?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
-            
-            error_msg = f"⚠️ **LIVE Access Token Expired**\n\nYour Upstox token is expired or was generated before today's market session. Please [click here to authorize]({auth_url}) before proceeding."
+        session_status = await db.check_and_sync_live_session()
+        if not session_status.get("ready"):
+            auth_url = session_status.get("auth_url", "")
+            error_msg = session_status.get("message", "⚠️ **LIVE Authorization Required**")
+            # Convert HTML bold to Markdown for Web UI if needed
+            error_msg = error_msg.replace("<b>", "**").replace("</b>", "**").replace("<code>", "`").replace("</code>", "`")
             await db.insert_event(thread_id, query_id, 'RESPONSE', 'System', error_msg)
             await queue.put(f"data: {json.dumps({'type': 'log', 'log_type': 'RESPONSE', 'agent': 'System', 'content': error_msg})}\n\n")
             await queue.put(f"data: {json.dumps({'type': 'done'})}\n\n")
@@ -325,7 +397,7 @@ async def cancel_order(confirmation_id: str):
 # ─── Chat Endpoint ────────────────────────────────────────────────────────────
 
 @app.post("/chat/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(request: ChatRequest, user: dict = Depends(get_current_user)):
     query_id = generate_query_id()
     return StreamingResponse(
         generate_sse_events(query_id, request),
@@ -338,7 +410,7 @@ class ThreadCreateRequest(BaseModel):
     title: str
 
 @app.post("/threads")
-async def create_thread(request: ThreadCreateRequest):
+async def create_thread(request: ThreadCreateRequest, user: dict = Depends(get_current_user)):
     """Create a new thread."""
     if not db._pool:
         raise HTTPException(status_code=500, detail="Database not initialized")
@@ -352,7 +424,7 @@ async def create_thread(request: ThreadCreateRequest):
     return {"thread_id": thread_id, "title": request.title}
 
 @app.get("/threads")
-async def list_threads():
+async def list_threads(user: dict = Depends(get_current_user)):
     """List all threads except Telegram ones."""
     if not db._pool:
         return {"threads": []}
@@ -364,7 +436,7 @@ async def list_threads():
             return {"threads": [{"id": r[0], "title": r[1], "created_at": r[2], "updated_at": r[3]} for r in rows]}
 
 @app.get("/threads/{thread_id}")
-async def get_thread_history(thread_id: str):
+async def get_thread_history(thread_id: str, user: dict = Depends(get_current_user)):
     """Retrieve chat history and artifacts for a thread."""
     if not db.checkpointer:
         return {"messages": [], "artifacts": []}
@@ -522,7 +594,7 @@ async def upstox_callback(code: str = None):
             admin_chat_id = await db.get_setting("ADMIN_CHAT_ID")
             if admin_chat_id:
                 try:
-                    await bot.send_message(admin_chat_id, "✅ **Live token successfully refreshed for today!**")
+                    await bot.send_message(admin_chat_id, "✅ <b>Live token successfully refreshed for today!</b>")
                 except:
                     pass
         

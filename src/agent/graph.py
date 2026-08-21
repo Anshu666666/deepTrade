@@ -18,8 +18,18 @@ def create_research_graph(checkpointer=None, store=None):
     # by using StoreBackend mapped to the /research prefix
     if store:
         from deepagents.backends.filesystem import FilesystemBackend
+        
+        def _get_research_namespace(rt):
+            from langgraph.config import get_config
+            try:
+                cfg = get_config()
+                thread_id = cfg.get("configurable", {}).get("thread_id", "default")
+            except Exception:
+                thread_id = "default"
+            return ("vfs", "research", thread_id)
+            
         # Create a StoreBackend matching /research/* to the store namespace
-        store_backend = StoreBackend(store=store, namespace=lambda rt: ("vfs", "research"))
+        store_backend = StoreBackend(store=store, namespace=_get_research_namespace)
         # Create a FilesystemBackend for skills
         import os
         skills_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "skills")

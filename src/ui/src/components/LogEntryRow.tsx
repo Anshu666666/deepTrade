@@ -69,32 +69,116 @@ export function LogEntryRow({ entry, index }: { entry: LogEntry; index: number }
       {!isOrderConfirmation ? (
         <div className="log-entry-body" style={{ whiteSpace: 'pre-wrap' }}>{displayContent}</div>
       ) : orderData ? (
-        <div className="order-confirmation-box" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '12px', borderRadius: '8px', marginTop: '8px' }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#ef4444' }}>⚠️ Order Confirmation</h4>
-          <ul style={{ margin: '0 0 12px 0', paddingLeft: '20px', fontSize: '0.9rem' }}>
-            <li><strong>Symbol:</strong> {orderData.preview.symbol}</li>
-            <li><strong>Action:</strong> {orderData.preview.transaction_type}</li>
-            <li><strong>Quantity:</strong> {orderData.preview.quantity}</li>
-            <li><strong>Type:</strong> {orderData.preview.order_type}</li>
-            <li><strong>Price:</strong> {orderData.preview.price}</li>
-          </ul>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              onClick={() => handleOrderAction('confirm')} 
-              disabled={orderStatus !== 'pending'}
-              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: orderStatus === 'pending' ? 'pointer' : 'not-allowed', opacity: orderStatus === 'cancel' ? 0.5 : 1 }}
-            >
-              ✅ Confirm
-            </button>
-            <button 
-              onClick={() => handleOrderAction('cancel')} 
-              disabled={orderStatus !== 'pending'}
-              style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: orderStatus === 'pending' ? 'pointer' : 'not-allowed', opacity: orderStatus === 'confirm' ? 0.5 : 1 }}
-            >
-              ❌ Cancel
-            </button>
+        <div style={{
+          position: 'relative',
+          marginTop: '10px',
+          borderRadius: '14px',
+          overflow: 'hidden',
+          background: 'rgba(255,255,255,0.03)',
+          backdropFilter: 'blur(20px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+          border: '1px solid rgba(239, 68, 68, 0.18)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.05) inset, 0 8px 32px rgba(0,0,0,0.35)',
+        }}>
+          {/* Top shimmer */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.18) 60%, transparent)',
+            pointerEvents: 'none',
+          }} />
+
+          <div style={{ padding: '14px 16px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#f87171', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.01em' }}>
+              ⚠️ Order Confirmation
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.875rem', marginBottom: '14px' }}>
+              {[
+                ['Symbol', orderData.preview.symbol],
+                ['Action', orderData.preview.transaction_type],
+                ['Quantity', orderData.preview.quantity],
+                ['Type', orderData.preview.order_type],
+                ['Price', orderData.preview.price],
+              ].map(([label, val]) => (
+                <div key={label as string} style={{ display: 'flex', gap: '8px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.45)', minWidth: '72px' }}>{label}:</span>
+                  <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>{val}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {/* Confirm — green glass */}
+              <button
+                onClick={() => handleOrderAction('confirm')}
+                disabled={orderStatus !== 'pending'}
+                style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  padding: '7px 18px',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(16,185,129,0.35)',
+                  background: orderStatus === 'cancel'
+                    ? 'rgba(16,185,129,0.06)'
+                    : 'rgba(16,185,129,0.18)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  color: orderStatus === 'cancel' ? 'rgba(255,255,255,0.3)' : '#6ee7b7',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: orderStatus === 'pending' ? 'pointer' : 'not-allowed',
+                  boxShadow: orderStatus !== 'cancel' ? '0 0 12px rgba(16,185,129,0.12) inset' : 'none',
+                  transition: 'all 0.2s',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {/* inner shimmer */}
+                <span style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
+                  pointerEvents: 'none',
+                }} />
+                ✓ Confirm
+              </button>
+
+              {/* Cancel — red glass */}
+              <button
+                onClick={() => handleOrderAction('cancel')}
+                disabled={orderStatus !== 'pending'}
+                style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  padding: '7px 18px',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(239,68,68,0.35)',
+                  background: orderStatus === 'confirm'
+                    ? 'rgba(239,68,68,0.06)'
+                    : 'rgba(239,68,68,0.18)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  color: orderStatus === 'confirm' ? 'rgba(255,255,255,0.3)' : '#fca5a5',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: orderStatus === 'pending' ? 'pointer' : 'not-allowed',
+                  boxShadow: orderStatus !== 'confirm' ? '0 0 12px rgba(239,68,68,0.1) inset' : 'none',
+                  transition: 'all 0.2s',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                <span style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                  pointerEvents: 'none',
+                }} />
+                ✕ Cancel
+              </button>
+            </div>
+
+            {orderStatus !== 'pending' && (
+              <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.02em' }}>
+                Action submitted: {orderStatus}
+              </div>
+            )}
           </div>
-          {orderStatus !== 'pending' && <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#6b7280' }}>Action submitted: {orderStatus}</div>}
         </div>
       ) : null}
 

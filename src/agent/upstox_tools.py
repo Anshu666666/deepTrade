@@ -11,8 +11,10 @@ from src.agent.upstox_client_manager import (
     get_history_api,
     get_portfolio_api,
     get_user_api,
-    get_trade_pnl_api
+    get_trade_pnl_api,
+    is_sandbox_mode
 )
+from src.agent.sandbox_registry import add_sandbox_order, get_sandbox_order_book, get_sandbox_positions, get_sandbox_funds
 import upstox_client
 
 import sys
@@ -86,8 +88,15 @@ pending_tool_futures = {}
 @tool
 async def upstox_place_order(symbol: str, quantity: int, transaction_type: Literal["BUY", "SELL"], order_type: str = "LIMIT", price: float = 0.0, config: RunnableConfig = None) -> str:
     """
-    Generates a pending order preview and waits for user confirmation before executing.
-    - order_type: Usually "LIMIT" or "MARKET". If "LIMIT", price MUST be > 0.
+    Place a BUY or SELL order for a stock symbol on Upstox.
+    ALWAYS call this tool directly whenever the user instructs to buy or sell a stock.
+    Calling this tool automatically sends the interactive [✅ Confirm] and [❌ Cancel] buttons to the user and waits for their response before executing.
+    
+    - symbol: Stock ticker symbol (e.g. 'PCJEWELLER', 'SBIN', 'RELIANCE', 'TCS').
+    - quantity: Number of shares to buy or sell (must be a positive integer >= 1).
+    - transaction_type: 'BUY' or 'SELL'.
+    - order_type: 'LIMIT' or 'MARKET' (default 'LIMIT').
+    - price: Order limit price in INR. Required if order_type is 'LIMIT'. If the user didn't specify a price, use the current market price (LTP) retrieved from upstox_get_market_data.
     """
     try:
         instrument_key = resolve_symbol(symbol)
@@ -133,17 +142,17 @@ async def upstox_place_order(symbol: str, quantity: int, transaction_type: Liter
         ])
         price_display = "Market Price" if order_type == "MARKET" else str(price)
         msg_text = (
-            "⚠️ **Action Required: Confirm Order**\n\n"
-            f"**Symbol:** {symbol}\n"
-            f"**Action:** {transaction_type}\n"
-            f"**Qty:** {quantity}\n"
-            f"**Type:** {order_type}\n"
-            f"**Price:** {price_display}\n\n"
+            "⚠️ <b>Action Required: Confirm Order</b>\n\n"
+            f"<b>Symbol:</b> {symbol}\n"
+            f"<b>Action:</b> {transaction_type}\n"
+            f"<b>Qty:</b> {quantity}\n"
+            f"<b>Type:</b> {order_type}\n"
+            f"<b>Price:</b> {price_display}\n\n"
             "Please confirm within 5 minutes."
         )
         
         try:
-            await bot.send_message(chat_id=chat_id, text=msg_text, reply_markup=keyboard, parse_mode="Markdown")
+            await bot.send_message(chat_id=chat_id, text=msg_text, reply_markup=keyboard, parse_mode="HTML")
         except Exception as e:
             logger.error(f"Failed to send confirmation message: {e}")
             return f"Error: Failed to request confirmation from user: {str(e)}"
@@ -202,6 +211,10 @@ async def upstox_place_order(symbol: str, quantity: int, transaction_type: Liter
                 is_amo=preview["is_amo"]
             )
             res = api.place_order(body)
+            
+            if is_sandbox_mode.get():
+                add_sandbox_order(thread_id if 'thread_id' in locals() else config.get("configurable", {}).get("thread_id", "default"), preview)
+                
             return f"Order successful! Upstox Response: {json.dumps(res.to_dict(), default=str)}"
         except Exception as e:
             return f"Order execution failed: {str(e)}"
@@ -230,6 +243,8 @@ def upstox_execute_confirmed_order(confirmation_id: str, preview_json: str) -> s
                 trigger_price=0.0
             )
             res = api.modify_order(body)
+            if is_sandbox_mode.get():
+                add_sandbox_order("default", preview) # Simplified for modify
         elif action == "CANCEL_ORDER":
             res = api.cancel_order(order_id=preview["order_id"])
         else:
@@ -246,14 +261,20 @@ def upstox_execute_confirmed_order(confirmation_id: str, preview_json: str) -> s
                 is_amo=preview["is_amo"]
             )
             res = api.place_order(body)
+            if is_sandbox_mode.get():
+                add_sandbox_order("default", preview)
             
         return json.dumps(res.to_dict(), default=str)
     except Exception as e:
         return f"Order execution failed: {str(e)}"
 
 @tool
-async def upstox_modify_order(order_id: str, quantity: int, order_type: str = "LIMIT", price: float = 0.0, config: RunnableConfig = None) -> str:
-    """Generates a pending modification preview and waits for user confirmation."""
+async def upstox_modify_order(order_id: str, quantity: int, price: float, order_type: str = "LIMIT", config: RunnableConfig = None) -> str:
+    """
+    Modify an existing open order on Upstox.
+    ALWAYS call this tool directly whenever the user wants to change quantity or price of an open order.
+    Calling this tool automatically presents the modification preview and interactive [✅ Confirm] and [❌ Cancel] buttons to the user before applying changes.
+    """
     confirmation_id = str(uuid.uuid4())
     preview = {
         "action": "MODIFY_ORDER",
@@ -274,8 +295,8 @@ async def upstox_modify_order(order_id: str, quantity: int, order_type: str = "L
         if chat_id:
             from src.api.telegram_bot import bot
             keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="✅ Confirm", callback_data=f"confirm_{confirmation_id}"), InlineKeyboardButton(text="❌ Cancel", callback_data=f"cancel_{confirmation_id}")]])
-            msg_text = f"⚠️ **Confirm Modification**\n\n**Order ID:** {order_id}\n**Qty:** {quantity}\n**Price:** {price}\n\nPlease confirm within 5 mins."
-            try: await bot.send_message(chat_id=chat_id, text=msg_text, reply_markup=keyboard, parse_mode="Markdown")
+            msg_text = f"⚠️ <b>Confirm Modification</b>\n\n<b>Order ID:</b> {order_id}\n<b>Qty:</b> {quantity}\n<b>Price:</b> {price}\n\nPlease confirm within 5 mins."
+            try: await bot.send_message(chat_id=chat_id, text=msg_text, reply_markup=keyboard, parse_mode="HTML")
             except: pass
     elif platform == "web":
         sse_queue = config.get("configurable", {}).get("sse_queue")
@@ -301,7 +322,11 @@ async def upstox_modify_order(order_id: str, quantity: int, order_type: str = "L
 
 @tool
 async def upstox_cancel_order(order_id: str, config: RunnableConfig = None) -> str:
-    """Generates a pending cancellation preview and waits for user confirmation."""
+    """
+    Cancel an existing open order on Upstox.
+    ALWAYS call this tool directly whenever the user wants to cancel an open order.
+    Calling this tool automatically presents the cancellation preview and interactive [✅ Confirm] and [❌ Cancel] buttons to the user before cancelling.
+    """
     confirmation_id = str(uuid.uuid4())
     preview = {
         "action": "CANCEL_ORDER",
@@ -318,8 +343,8 @@ async def upstox_cancel_order(order_id: str, config: RunnableConfig = None) -> s
         if chat_id:
             from src.api.telegram_bot import bot
             keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="✅ Confirm", callback_data=f"confirm_{confirmation_id}"), InlineKeyboardButton(text="❌ Cancel", callback_data=f"cancel_{confirmation_id}")]])
-            msg_text = f"⚠️ **Confirm Cancellation**\n\n**Order ID:** {order_id}\n\nPlease confirm within 5 mins."
-            try: await bot.send_message(chat_id=chat_id, text=msg_text, reply_markup=keyboard, parse_mode="Markdown")
+            msg_text = f"⚠️ <b>Confirm Cancellation</b>\n\n<b>Order ID:</b> {order_id}\n\nPlease confirm within 5 mins."
+            try: await bot.send_message(chat_id=chat_id, text=msg_text, reply_markup=keyboard, parse_mode="HTML")
             except: pass
     elif platform == "web":
         sse_queue = config.get("configurable", {}).get("sse_queue")
@@ -346,9 +371,14 @@ async def upstox_cancel_order(order_id: str, config: RunnableConfig = None) -> s
 
 
 @tool
-def upstox_get_order_book() -> str:
+def upstox_get_order_book(config: RunnableConfig = None) -> str:
     """Retrieves the list of today's orders."""
     try:
+        if is_sandbox_mode.get():
+            thread_id = config.get("configurable", {}).get("thread_id", "default") if config else "default"
+            orders = get_sandbox_order_book(thread_id)
+            return json.dumps({"data": orders}, default=str)
+            
         from src.agent.upstox_client_manager import get_live_trading_client
         import upstox_client
         api = upstox_client.OrderApi(get_live_trading_client()) # Order book is v2
@@ -359,9 +389,13 @@ def upstox_get_order_book() -> str:
 
 
 @tool
-def upstox_get_holdings() -> str:
+def upstox_get_holdings(config: RunnableConfig = None) -> str:
     """Retrieves current holdings in the Upstox portfolio."""
     try:
+        if is_sandbox_mode.get():
+            thread_id = config.get("configurable", {}).get("thread_id", "default") if config else "default"
+            return json.dumps({"data": get_sandbox_positions(thread_id)}, default=str)
+            
         api = get_portfolio_api()
         res = api.get_holdings(api_version="2.0")
         return json.dumps(res.to_dict(), default=str)
@@ -370,9 +404,13 @@ def upstox_get_holdings() -> str:
 
 
 @tool
-def upstox_get_positions() -> str:
+def upstox_get_positions(config: RunnableConfig = None) -> str:
     """Retrieves open positions in the Upstox portfolio."""
     try:
+        if is_sandbox_mode.get():
+            thread_id = config.get("configurable", {}).get("thread_id", "default") if config else "default"
+            return json.dumps({"data": get_sandbox_positions(thread_id)}, default=str)
+            
         api = get_portfolio_api()
         res = api.get_positions(api_version="2.0")
         return json.dumps(res.to_dict(), default=str)
@@ -381,12 +419,17 @@ def upstox_get_positions() -> str:
 
 
 @tool
-def upstox_get_funds() -> str:
+def upstox_get_funds(config: RunnableConfig = None) -> str:
     """Retrieves available funds and margins."""
     try:
+        if is_sandbox_mode.get():
+            thread_id = config.get("configurable", {}).get("thread_id", "default") if config else "default"
+            return json.dumps({"data": {"equity": get_sandbox_funds(thread_id)}}, default=str)
+            
         api = get_user_api()
         # get_user_fund_margin_v3 takes no api_version arg
         res = api.get_user_fund_margin_v3()
         return json.dumps(res.to_dict(), default=str)
     except Exception as e:
         return f"Error fetching funds: {str(e)}"
+

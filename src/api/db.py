@@ -1,5 +1,11 @@
+import sys
 import os
+import asyncio
 import logging
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from dotenv import load_dotenv
 load_dotenv()
 from contextlib import asynccontextmanager
@@ -237,3 +243,104 @@ async def get_live_token_status() -> dict:
     except Exception as e:
         logger.error(f"Failed to check token validity: {e}")
         return {"token": None, "is_valid": False}
+
+import urllib.request
+import requests
+
+def get_current_public_ip() -> str:
+    """Fetch current public IP quickly with timeout."""
+    try:
+        req = urllib.request.Request("https://api.ipify.org", headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            return resp.read().decode('utf-8').strip()
+    except Exception:
+        try:
+            req = urllib.request.Request("https://ifconfig.me/ip", headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                return resp.read().decode('utf-8').strip()
+        except Exception:
+            return None
+
+async def check_and_sync_live_session() -> dict:
+    """
+    Deterministic check performed BEFORE sending queries to the LLM in LIVE mode:
+    1. Validates whether token was generated today after 3:30 AM IST.
+    2. Checks if the machine's current public IP matches the registered static IP in Upstox.
+    3. If IP changed, automatically sends PUT /v2/user/ip to Upstox to update it, invalidating the old token.
+    4. Returns status dict with instructions/URL if user action is needed.
+    """
+    client_id = os.environ.get("UPSTOX_CLIENT_ID", "")
+    webhook_domain = await get_setting("WEBHOOK_DOMAIN") or ""
+    redirect_uri = f"{webhook_domain}/upstox/callback" if webhook_domain else ""
+    auth_url = f"https://api.upstox.com/v2/login/authorization/dialog?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
+
+    token_status = await get_live_token_status()
+    if not token_status["is_valid"]:
+        return {
+            "ready": False,
+            "reason": "token_expired",
+            "auth_url": auth_url,
+            "message": (
+                "⚠️ <b>LIVE Access Token Expired</b>\n\n"
+                "Your Upstox token is expired or was generated before today's market session. "
+                "Please authorize DeepTrade to continue:\n\n"
+                f"🔗 <a href='{auth_url}'>Click Here to Authorize</a>"
+            )
+        }
+    
+    current_ip = get_current_public_ip()
+    if current_ip:
+        last_synced_ip = await get_setting("LAST_SYNCED_STATIC_IP")
+        if last_synced_ip != current_ip:
+            # IP changed or not yet tracked! Try to automatically update Upstox static IP
+            token = token_status["token"]
+            update_url = "https://api.upstox.com/v2/user/ip"
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}"
+            }
+            data = {
+                "primary_ip": current_ip,
+                "secondary_ip": "2405:201:4039:5035:9171:7999:a453:33d"
+            }
+            try:
+                loop = asyncio.get_running_loop()
+                resp = await loop.run_in_executor(None, lambda: requests.put(update_url, headers=headers, json=data, timeout=5))
+                if resp.status_code == 200:
+                    logger.info(f"Automatically updated Upstox static IP to {current_ip}")
+                    await set_setting("LAST_SYNCED_STATIC_IP", current_ip)
+                    # Updating IP invalidates existing token in Upstox
+                    await set_setting("UPSTOX_LIVE_ACCESS_TOKEN", "")
+                    return {
+                        "ready": False,
+                        "reason": "ip_updated",
+                        "auth_url": auth_url,
+                        "new_ip": current_ip,
+                        "message": (
+                            f"🌐 <b>Public IP Change Detected & Synced</b>\n\n"
+                            f"Your IP address changed to <code>{current_ip}</code>. DeepTrade has automatically updated and whitelisted your new IP in Upstox!\n\n"
+                            f"Because Upstox resets session tokens upon IP updates, please click below to re-authorize for today:\n\n"
+                            f"🔗 <a href='{auth_url}'>Authorize DeepTrade</a>"
+                        )
+                    }
+                elif resp.status_code == 401:
+                    # Token was already invalid on Upstox side
+                    return {
+                        "ready": False,
+                        "reason": "token_expired",
+                        "auth_url": auth_url,
+                        "message": (
+                            "⚠️ <b>LIVE Access Token Expired</b>\n\n"
+                            "Your Upstox token is expired. Please click below to authorize for today:\n\n"
+                            f"🔗 <a href='{auth_url}'>Click Here to Authorize</a>"
+                        )
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to auto-sync IP with Upstox: {e}")
+        else:
+            # IP already matches last synced IP
+            pass
+            
+    return {"ready": True, "token": token_status["token"]}
+

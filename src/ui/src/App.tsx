@@ -7,9 +7,41 @@ import { ArtifactPanel } from './components/ArtifactPanel';
 import { LogEntryRow } from './components/LogEntryRow';
 import { ReferencesPanel } from './components/ReferencesPanel';
 import { NexusReasoning } from './components/NexusReasoning';
+import { useNavigate } from 'react-router-dom';
 import { type Message, type Thread, COMMANDS, type LogEntry, type ReferenceEntry } from './types';
+import { StarsBackground } from './components/animate-ui/components/backgrounds/stars';
+
+import { DotmSquare1 } from './components/ui/dotmatrix/dotm-square-1';
+import { DotmSquare2 } from './components/ui/dotmatrix/dotm-square-2';
+import { DotmSquare3 } from './components/ui/dotmatrix/dotm-square-3';
+import { DotmCircular1 } from './components/ui/dotmatrix/dotm-circular-1';
+import { DotmCircular2 } from './components/ui/dotmatrix/dotm-circular-2';
+import { DotmCircular3 } from './components/ui/dotmatrix/dotm-circular-3';
+import { DotmTriangle1 } from './components/ui/dotmatrix/dotm-triangle-1';
+import { DotmTriangle2 } from './components/ui/dotmatrix/dotm-triangle-2';
+import { DotmHex1 } from './components/ui/dotmatrix/dotm-hex-1';
+import { DotmHex2 } from './components/ui/dotmatrix/dotm-hex-2';
+
+const LOADERS = [
+  DotmSquare1,
+  DotmSquare2,
+  DotmSquare3,
+  DotmCircular1,
+  DotmCircular2,
+  DotmCircular3,
+  DotmTriangle1,
+  DotmTriangle2,
+  DotmHex1,
+  DotmHex2,
+];
 
 function App() {
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authCode, setAuthCode] = useState('');
+  const [authError, setAuthError] = useState('');
+
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   
@@ -20,6 +52,7 @@ function App() {
   const [filteredCommands, setFilteredCommands] = useState(COMMANDS);
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedCommand, setSelectedCommand] = useState<typeof COMMANDS[0] | null>(null);
+  const [activeLoaderIndex, setActiveLoaderIndex] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -28,7 +61,7 @@ function App() {
   
   const fetchThreads = async () => {
     try {
-      const res = await fetch('http://localhost:8000/threads');
+      const res = await fetch('http://localhost:8000/threads', { credentials: 'include' });
       const data = await res.json();
       setThreads(data.threads || []);
     } catch (e) {
@@ -36,8 +69,26 @@ function App() {
     }
   };
 
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/status', { credentials: 'include' });
+      const data = await res.json();
+      if (data.authenticated) {
+        setIsAuthenticated(true);
+        fetchThreads();
+      } else {
+        navigate('/login');
+      }
+    } catch (e) {
+      console.error(e);
+      navigate('/login');
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
+
   useEffect(() => {
-    fetchThreads();
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -61,7 +112,8 @@ function App() {
       const res = await fetch('http://localhost:8000/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New DeepTrade Chat' })
+        body: JSON.stringify({ title: 'New DeepTrade Chat' }),
+        credentials: 'include'
       });
       const data = await res.json();
       await fetchThreads();
@@ -80,7 +132,7 @@ function App() {
     setMessages([]);
     
     try {
-      const res = await fetch(`http://localhost:8000/threads/${threadId}`);
+      const res = await fetch(`http://localhost:8000/threads/${threadId}`, { credentials: 'include' });
       const data = await res.json();
       
       const loadedMessages = data.messages.map((m: any, i: number) => ({
@@ -131,7 +183,8 @@ function App() {
         const res = await fetch('http://localhost:8000/threads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title })
+          body: JSON.stringify({ title }),
+          credentials: 'include'
         });
         const data = await res.json();
         currentThreadId = data.thread_id;
@@ -147,6 +200,9 @@ function App() {
     const hidden_instruction = cmdMatch ? cmdMatch.instruction : undefined;
     const finalContent = selectedCommand ? `${selectedCommand.name} ${input}`.trim() : input;
 
+    const apiMessage = input.trim();
+    const commandName = selectedCommand ? selectedCommand.name : undefined;
+
     const userMessage: Message = { role: 'user', content: finalContent, id: Date.now().toString(), logs: [], artifacts: [] };
     const agentMessage: Message = { role: 'agent', content: '', id: (Date.now() + 1).toString(), logs: [], artifacts: [] };
 
@@ -154,6 +210,7 @@ function App() {
     setInput('');
     setSelectedCommand(null);
     setIsStreaming(true);
+    setActiveLoaderIndex(Math.floor(Math.random() * LOADERS.length));
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -162,7 +219,8 @@ function App() {
       const response = await fetch('http://localhost:8000/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input, hidden_instruction, thread_id: currentThreadId }),
+        body: JSON.stringify({ message: apiMessage, command: commandName, hidden_instruction, thread_id: currentThreadId }),
+        credentials: 'include',
         signal: controller.signal,
       });
 
@@ -315,7 +373,7 @@ function App() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInput(val);
-    if (val.startsWith('/')) {
+    if (val.startsWith('/') && !selectedCommand) {
       const query = val.split(' ')[0].toLowerCase();
       const filtered = COMMANDS.filter(c => c.name.startsWith(query));
       setFilteredCommands(filtered);
@@ -350,8 +408,17 @@ function App() {
     }
   };
 
+  if (isCheckingAuth) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0a0a0a', color: 'white' }}>Verifying session...</div>;
+  }
+
   return (
-    <div className="app-layout">
+    <div style={{ position: 'relative', background: '#000' }}>
+      {/* Stars background layer */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <StarsBackground starColor="#ffffff" speed={20} className="opacity-30" />
+      </div>
+      <div className="app-layout" style={{ position: 'relative', zIndex: 1 }}>
       <Sidebar 
         threads={threads} 
         activeThreadId={activeThreadId} 
@@ -367,6 +434,14 @@ function App() {
         <main>
           {messages.length === 0 ? (
             <div className="empty-state">
+              <div style={{
+                width: '56px', height: '56px',
+                borderRadius: '14px',
+                background: 'rgba(84,161,253,0.1)',
+                border: '1px solid rgba(84,161,253,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.5rem', color: '#54A1FD', marginBottom: '0.5rem',
+              }}>❖</div>
               <h2>What would you like to research?</h2>
               <p>Try predefined commands: <code>/news NVDA</code>, <code>/analyze AAPL</code>, <code>/deep-dive TSLA</code></p>
             </div>
@@ -384,16 +459,31 @@ function App() {
                         if (match) {
                           return (
                             <div className="user-text" style={{ whiteSpace: 'pre-wrap' }}>
-                              <span style={{ 
-                                display: 'inline-block', 
-                                background: 'rgba(129, 140, 248, 0.2)', 
-                                color: '#818cf8', 
-                                padding: '2px 8px', 
-                                borderRadius: '12px', 
-                                fontSize: '0.9rem',
-                                fontWeight: 600, 
-                                marginRight: '6px' 
+                              <span style={{
+                                display: 'inline-block',
+                                verticalAlign: 'middle',
+                                marginTop: '-2px',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                background: 'rgba(255,255,255,0.08)',
+                                backdropFilter: 'blur(12px) saturate(140%)',
+                                WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                color: 'rgba(255,255,255,0.9)',
+                                padding: '2px 10px',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                marginRight: '8px',
+                                boxShadow: '0 0 0 1px rgba(255,255,255,0.06) inset',
+                                letterSpacing: '0.02em',
                               }}>
+                                {/* shimmer */}
+                                <span style={{
+                                  position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
+                                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3) 50%, transparent)',
+                                  pointerEvents: 'none',
+                                }} />
                                 {match[1]}
                               </span>
                               {match[2]}
@@ -409,35 +499,21 @@ function App() {
                           <div className="process-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {(() => {
                               const elements = [];
-                              let currentGroup: { entry: LogEntry; originalIndex: number }[] = [];
+                              const processLogs = msg.logs.filter(entry => entry.log_type !== 'REASONING' && entry.log_type !== 'RESPONSE');
                               
-                              for (let i = 0; i < msg.logs.length; i++) {
-                                const entry = msg.logs[i];
-                                if (entry.log_type === 'REASONING') {
-                                  if (currentGroup.length > 0) {
-                                    elements.push(
-                                      <details className="process-details" key={`group-${i}`}>
-                                        <summary>Process Steps ({currentGroup.length})</summary>
-                                        <div className="process-content">
-                                          {currentGroup.map(g => <LogEntryRow key={g.originalIndex} entry={g.entry} index={g.originalIndex} />)}
-                                        </div>
-                                      </details>
-                                    );
-                                    currentGroup = [];
-                                  }
-                                  const isActiveStream = isStreaming && idx === messages.length - 1 && i === msg.logs.length - 1;
-                                  elements.push(<NexusReasoning key={i} content={entry.content} isStreaming={isActiveStream} />);
-                                } else {
-                                  currentGroup.push({ entry, originalIndex: i });
-                                }
+                              const reasoningLogs = msg.logs.filter(entry => entry.log_type === 'REASONING');
+                              if (reasoningLogs.length > 0) {
+                                const combinedContent = reasoningLogs.map(l => l.content).join('\n\n').trim();
+                                const isActiveStream = isStreaming && idx === messages.length - 1 && msg.logs[msg.logs.length - 1].log_type === 'REASONING';
+                                elements.push(<NexusReasoning key="reasoning-combined" content={combinedContent} isStreaming={isActiveStream} />);
                               }
                               
-                              if (currentGroup.length > 0) {
+                              if (processLogs.length > 0) {
                                 elements.push(
-                                  <details className="process-details" open={isStreaming && idx === messages.length - 1 ? true : undefined} key="group-end">
-                                    <summary>Process Steps ({currentGroup.length})</summary>
+                                  <details className="process-details" open={isStreaming && idx === messages.length - 1 ? true : undefined} key="process-group">
+                                    <summary>Process Steps ({processLogs.length})</summary>
                                     <div className="process-content">
-                                      {currentGroup.map(g => <LogEntryRow key={g.originalIndex} entry={g.entry} index={g.originalIndex} />)}
+                                      {processLogs.map((entry, i) => <LogEntryRow key={`process-${i}`} entry={entry} index={i} />)}
                                     </div>
                                   </details>
                                 );
@@ -461,17 +537,22 @@ function App() {
                         {/* Final Answer */}
                         {msg.content && (
                           <div className="final-answer">
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            <ReactMarkdown
+                              components={{
+                                a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />
+                              }}
+                            >
+                              {msg.content}
+                            </ReactMarkdown>
                           </div>
                         )}
 
                         {isStreaming && !msg.content && (
-                          <div className="streaming-indicator">
-                            <div className="bar" />
-                            <div className="bar" />
-                            <div className="bar" />
-                            <div className="bar" />
-                            <div className="bar" />
+                          <div className="streaming-indicator" style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+                            {(() => {
+                              const LoaderComp = LOADERS[activeLoaderIndex];
+                              return <LoaderComp size={28} colorPreset="grad-aurora" speed={1.2} bloom />;
+                            })()}
                           </div>
                         )}
                       </>
@@ -487,25 +568,93 @@ function App() {
         <footer>
           <div className="input-container">
             {showMenu && (
-              <div className="command-menu">
+              <div className="command-menu" style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 12px)',
+                left: 0,
+                width: '100%',
+                zIndex: 100,
+                overflow: 'hidden',
+                background: 'rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(24px) saturate(160%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '14px',
+                boxShadow: '0 0 0 1px rgba(255,255,255,0.05) inset, 0 16px 48px rgba(0,0,0,0.5)',
+              }}>
+                {/* Top shimmer */}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.22) 30%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.22) 70%, transparent)',
+                  pointerEvents: 'none',
+                }} />
                 {filteredCommands.map((cmd, idx) => (
                   <div
                     key={cmd.name}
                     className={`command-item ${idx === activeIndex ? 'active' : ''}`}
                     onClick={() => selectCommand(cmd)}
+                    style={idx === activeIndex ? {
+                      background: 'rgba(84,161,253,0.12)',
+                      borderLeft: '2px solid rgba(84,161,253,0.5)',
+                    } : {}}
                   >
-                    <div className="command-name">{cmd.name}</div>
+                    <div className="command-name" style={{ color: idx === activeIndex ? '#54A1FD' : 'rgba(255,255,255,0.85)' }}>{cmd.name}</div>
                     <div className="command-desc">{cmd.desc}</div>
                   </div>
                 ))}
               </div>
             )}
             <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex' }}>
-              <div className="input-wrapper">
+              <div className="input-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowMenu(prev => !prev)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    padding: '0 12px',
+                    cursor: 'pointer',
+                    fontSize: '1.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#818cf8'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)'}
+                  title="Slash Commands"
+                >
+                  /
+                </button>
                 {selectedCommand && (
-                  <div className="command-badge" style={{ display: 'flex', alignItems: 'center', background: 'rgba(129, 140, 248, 0.2)', color: '#818cf8', padding: '4px 10px', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 500, marginRight: '8px', whiteSpace: 'nowrap' }}>
+                  <div className="command-badge" style={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'rgba(255,255,255,0.08)',
+                    backdropFilter: 'blur(12px) saturate(140%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+                    border: '1px solid rgba(255,255,255,0.14)',
+                    color: 'rgba(255,255,255,0.88)',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    marginRight: '8px',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 0 0 1px rgba(255,255,255,0.05) inset',
+                    letterSpacing: '0.02em',
+                  }}>
+                    {/* shimmer */}
+                    <span style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.28) 50%, transparent)',
+                      pointerEvents: 'none',
+                    }} />
                     {selectedCommand.name}
-                    <button type="button" onClick={() => setSelectedCommand(null)} style={{ background: 'none', border: 'none', color: 'inherit', marginLeft: '6px', cursor: 'pointer', padding: 0, fontSize: '1rem', lineHeight: 1 }}>&times;</button>
+                    <button type="button" onClick={() => setSelectedCommand(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', marginLeft: '6px', cursor: 'pointer', padding: 0, fontSize: '1rem', lineHeight: 1 }}>&times;</button>
                   </div>
                 )}
                 <input
@@ -541,6 +690,7 @@ function App() {
             AI can make mistakes. Verify important financial data independently.
           </div>
         </footer>
+      </div>
       </div>
     </div>
   );

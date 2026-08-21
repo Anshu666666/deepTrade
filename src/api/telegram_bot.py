@@ -103,21 +103,28 @@ async def cmd_new(message: types.Message):
     else:
         await message.answer("❌ Failed to start a new session. Database might not be initialized.")
 
-@dp.message(Command("sandbox"))
-async def cmd_sandbox(message: types.Message):
+@dp.message(Command("toggle"))
+async def cmd_toggle(message: types.Message, command: CommandObject):
     chat_id = str(message.chat.id)
     thread_id = await db.get_or_create_telegram_thread(chat_id)
     if thread_id:
-        thread_sandbox_modes[thread_id] = True
-    await message.answer("🔄 <b>Mode Switched:</b> You are now in <b>Sandbox Mode</b>. All orders will be simulated and no real money will be used.")
-
-@dp.message(Command("live"))
-async def cmd_live(message: types.Message):
-    chat_id = str(message.chat.id)
-    thread_id = await db.get_or_create_telegram_thread(chat_id)
-    if thread_id:
-        thread_sandbox_modes[thread_id] = False
-    await message.answer("⚠️ <b>Mode Switched:</b> You are now in <b>LIVE Mode</b>. All orders will be placed on your actual Upstox account. Proceed with caution!")
+        if thread_id not in thread_sandbox_modes:
+            mode_str = await db.get_setting(f"mode_{thread_id}")
+            thread_sandbox_modes[thread_id] = (mode_str == "sandbox")
+            
+        new_mode = not thread_sandbox_modes[thread_id]
+        thread_sandbox_modes[thread_id] = new_mode
+        await db.set_setting(f"mode_{thread_id}", "sandbox" if new_mode else "live")
+        
+        if new_mode:
+            msg = "🔄 <b>Mode Switched:</b> You are now in <b>Sandbox Mode</b>. All orders will be simulated and no real money will be used."
+        else:
+            msg = "⚠️ <b>Mode Switched:</b> You are now in <b>LIVE Mode</b>. All orders will be placed on your actual Upstox account. Proceed with caution!"
+            
+        await message.answer(msg)
+        
+        if command.args:
+            await process_query(message, command.args)
 
 @dp.message(Command("start", "help"))
 async def cmd_start(message: types.Message):
@@ -203,24 +210,21 @@ async def process_query(message: types.Message, query_text: str):
 
     try:
         # Default to Live mode (False) unless explicitly set to Sandbox (True)
-        is_sandbox = thread_sandbox_modes.get(thread_id, False)
+        if thread_id not in thread_sandbox_modes:
+            mode_str = await db.get_setting(f"mode_{thread_id}")
+            thread_sandbox_modes[thread_id] = (mode_str == "sandbox")
+            
+        is_sandbox = thread_sandbox_modes[thread_id]
         is_sandbox_mode.set(is_sandbox)
         
+        from langchain_core.messages import SystemMessage
+        mode_msg = "SYSTEM NOTIFICATION: You are currently operating in SANDBOX (Paper Trading) mode. All orders are simulated." if is_sandbox else "SYSTEM NOTIFICATION: You are currently operating in LIVE (Real Money) mode. All orders will be placed on your actual Upstox account."
+        state["messages"].insert(0, SystemMessage(content=mode_msg))
+        
         if not is_sandbox:
-            token_status = await db.get_live_token_status()
-            if not token_status["is_valid"]:
-                client_id = os.environ.get("UPSTOX_CLIENT_ID", "")
-                webhook_domain = await db.get_setting("WEBHOOK_DOMAIN") or ""
-                redirect_uri = f"{webhook_domain}/upstox/callback"
-                auth_url = f"https://api.upstox.com/v2/login/authorization/dialog?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
-                
-                msg = (
-                    "⚠️ <b>LIVE Access Token Expired</b>\n\n"
-                    "Your Upstox token is expired or was generated before today's market session. "
-                    "Please authorize DeepTrade to continue:\n\n"
-                    f"🔗 <a href='{auth_url}'>Click Here to Authorize</a>"
-                )
-                await status_msg.edit_text(msg)
+            session_status = await db.check_and_sync_live_session()
+            if not session_status.get("ready"):
+                await status_msg.edit_text(session_status.get("message", "⚠️ <b>Authorization Required</b>"))
                 return
         
         async for namespace, stream_type, output in _graph.astream(state, config=config, stream_mode=["messages", "updates"], subgraphs=True):
@@ -340,8 +344,7 @@ async def setup_webhook(graph, webhook_url: str):
         await bot.set_my_commands([
             BotCommand(command="start", description="Start the bot"),
             BotCommand(command="new", description="Clear memory and start a fresh conversation"),
-            BotCommand(command="sandbox", description="Switch to simulated Sandbox trading mode"),
-            BotCommand(command="live", description="Switch to LIVE trading mode (uses real money)"),
+            BotCommand(command="toggle", description="Toggle between Sandbox (Paper) and LIVE trading mode"),
             BotCommand(command="analyse", description="Perform a comprehensive financial analysis"),
             BotCommand(command="news", description="Fetch and summarize the latest news"),
             BotCommand(command="deepdive", description="Conduct an in-depth research report")
@@ -398,6 +401,41 @@ async def telegram_webhook_endpoint(request: Request):
         if chat_id != admin_chat_id:
             logger.warning(f"Unauthorized access attempt from {chat_id}")
             return {"status": "ignored"}
+            
+        secret = os.environ.get("WEB_OTP_SECRET")
+        if secret:
+            expiry_str = await db.get_setting("TELEGRAM_AUTH_EXPIRY")
+            is_expired = not expiry_str or float(expiry_str) < time.time()
+            
+            if update.message and update.message.text:
+                text = update.message.text.strip()
+                if text.isdigit() and len(text) == 6:
+                    import pyotp
+                    totp = pyotp.TOTP(secret)
+                    if totp.verify(text, valid_window=1):
+                        expiry_date = time.time() + (7 * 24 * 60 * 60)
+                        await db.set_setting("TELEGRAM_AUTH_EXPIRY", str(expiry_date))
+                        try:
+                            await bot.send_message(chat_id, "✅ <b>Authentication Successful!</b> Your session is unlocked for 7 days.")
+                        except: pass
+                        return {"status": "ok"}
+                    elif is_expired:
+                        try:
+                            await bot.send_message(chat_id, "❌ <b>Invalid Code.</b> Please try again.")
+                        except: pass
+                        return {"status": "ok"}
+            
+            if is_expired:
+                if update.message:
+                    try:
+                        await bot.send_message(chat_id, "🔒 <b>Security Check:</b> Your session has expired. Please reply with your 6-digit Google Authenticator code to unlock the bot for 7 days.")
+                    except: pass
+                elif update.callback_query:
+                    try:
+                        import aiogram
+                        await bot(aiogram.methods.AnswerCallbackQuery(callback_query_id=update.callback_query.id, text="Session expired. Send your Authenticator code in the chat.", show_alert=True))
+                    except: pass
+                return {"status": "ok"}
     
     async def process_update():
         try:
