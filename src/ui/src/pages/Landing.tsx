@@ -362,16 +362,19 @@ const Landing: React.FC = () => {
               </p>
             </div>
 
-            {/* Globe Container - Absolute at bottom right */}
-            <div className="absolute -bottom-56 -right-20 md:-bottom-80 md:-right-56 lg:-bottom-[420px] lg:-right-[320px] w-60 md:w-[360px] lg:w-[560px] z-[-1] pointer-events-auto opacity-70">
+            {/* Globe Container - Positioned beside the text centered vertically */}
+            <div className="absolute top-1/2 -translate-y-1/2 -right-12 md:-right-36 lg:-right-56 w-56 md:w-[400px] lg:w-[520px] z-[-1] pointer-events-auto opacity-75">
               <GlobeAnalytics />
             </div>
 
           </div>
         </div>
 
+        {/* Generous margin/spacer between Section 4 and Section 5 */}
+        <div className="w-full h-24 md:h-48 lg:h-64 pointer-events-none" />
+
         {/* SECTION 5: SECURITY & SANDBOX */}
-        <div className="relative min-h-0 md:min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-8 md:pt-0 pb-8 md:pb-16">
+        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
           
           {/* Text Section (Left) - Enhanced with z-30 pointer-events-auto */}
           <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[45%] md:ml-12 lg:ml-24 pointer-events-auto">
