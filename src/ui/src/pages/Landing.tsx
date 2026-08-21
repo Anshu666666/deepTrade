@@ -29,6 +29,7 @@ import LaunchModal from '../components/landing/LaunchModal';
 
 const Landing: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const demoVideoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const section3Ref = useRef<HTMLDivElement>(null);
   const keyboardRef = useRef<HTMLDivElement>(null);
@@ -37,6 +38,28 @@ const Landing: React.FC = () => {
 
   const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Play demo video only when scrolled into view
+  useEffect(() => {
+    const videoEl = demoVideoRef.current;
+    if (!videoEl) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            videoEl.play().catch(() => {});
+          } else {
+            videoEl.pause();
+          }
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(videoEl);
+    return () => observer.disconnect();
+  }, []);
 
   const handleInitializeTerminal = () => {
     // Check if promotional showcase mode is enabled (e.g. Anshu's public Vercel promo deployment)
@@ -252,8 +275,8 @@ const Landing: React.FC = () => {
             {/* Native Demo Video */}
             <div className="w-full bg-black border border-zinc-800 rounded-xl shadow-2xl relative z-10 overflow-hidden backdrop-blur-sm">
               <video
+                ref={demoVideoRef}
                 src={demoVideo}
-                autoPlay
                 loop
                 muted
                 playsInline
