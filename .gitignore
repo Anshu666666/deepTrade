@@ -12,3 +12,4 @@ sandbox_db.json
 !src/ui/src/assets/*.mp4
 .vscode/
 .idea/
+*totp_qr*.png

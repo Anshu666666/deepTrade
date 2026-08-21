@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StarsBackground } from '../components/animate-ui/components/backgrounds/stars';
 import { CandyButton } from '../components/ui/candy-button';
+import TotpSetupModal from '../components/landing/TotpSetupModal';
+import { QrCode } from 'lucide-react';
 
 const EXTERNAL_LANDING_URL = '/'; // links back to landing page
 
@@ -9,6 +11,7 @@ const Login: React.FC = () => {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTotpModalOpen, setIsTotpModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -263,21 +266,52 @@ const Login: React.FC = () => {
               width: '100%',
               height: '1px',
               background: 'rgba(255,255,255,0.06)',
-              margin: '1.75rem 0 1.25rem',
+              margin: '1.5rem 0 1rem',
             }} />
 
-            <p style={{
-              fontSize: '0.75rem',
-              color: 'rgba(255,255,255,0.25)',
-              textAlign: 'center',
-              letterSpacing: '0.03em',
-              margin: 0,
-            }}>
-              Your 6-digit TOTP code from the Telegram bot
-            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem' }}>
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.3)',
+                textAlign: 'center',
+                letterSpacing: '0.02em',
+                margin: 0,
+              }}>
+                Your 6-digit rolling code from your Authenticator app
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setIsTotpModalOpen(true)}
+                style={{
+                  background: 'rgba(84,161,253,0.08)',
+                  border: '1px solid rgba(84,161,253,0.25)',
+                  borderRadius: '9999px',
+                  padding: '0.35rem 0.9rem',
+                  color: '#54A1FD',
+                  fontSize: '0.75rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(84,161,253,0.18)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(84,161,253,0.08)')}
+              >
+                <QrCode size={13} />
+                <span>First time? Scan 2FA QR Code</span>
+              </button>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* 2FA Setup Modal */}
+      <TotpSetupModal
+        isOpen={isTotpModalOpen}
+        onClose={() => setIsTotpModalOpen(false)}
+      />
 
       {/* Footer */}
       <footer style={{

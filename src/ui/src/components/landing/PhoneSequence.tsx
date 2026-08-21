@@ -76,27 +76,33 @@ const PhoneSequence: React.FC = () => {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
+      const progress = index / (frameUrls.length - 1 || 1);
+      const zoomFactor = 1.0 + (0.30 * progress);
       const isMobile = logicalWidth < 768;
 
       if (isMobile) {
-        // MOBILE: Scale the phone to fit the bottom area (below the text block) with clean margin
-        const scale = Math.min((logicalHeight * 0.44) / img.height, (logicalWidth * 0.92) / (img.width * 0.4));
+        // Item 1: Centered vertically in the space below the header and text card with balanced margin
+        const textBlockBottom = 250; // approximate bottom of text + system commands card
+        const availableHeight = Math.max(logicalHeight - textBlockBottom - 16, 200);
+        const baseScale = Math.min((availableHeight * 0.82) / img.height, (logicalWidth * 0.94) / (img.width * 0.42));
+        const scale = baseScale * zoomFactor;
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
+        
         // Centered horizontally
         const x = (logicalWidth / 2) - (drawWidth / 2);
-        // Positioned neatly in the lower screen with 10px bottom margin
-        const y = logicalHeight - drawHeight - 10;
+        // Centered vertically in the lower available viewport area
+        const y = textBlockBottom + (availableHeight / 2) - (drawHeight / 2);
         
         ctx.clearRect(0, 0, logicalWidth, logicalHeight);
         ctx.drawImage(img, x, y, drawWidth, drawHeight);
       } else {
-        // DESKTOP: Shifted right — range [82%→68%]
-        const scale = Math.min(logicalWidth / img.width, (logicalHeight * 0.9) / img.height);
+        // DESKTOP: Shifted right — range [82%→68%] with progressive 1.0x -> 1.3x zoom
+        const baseScale = Math.min(logicalWidth / img.width, (logicalHeight * 0.88) / img.height);
+        const scale = baseScale * zoomFactor;
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
         
-        const progress = index / (frameUrls.length - 1 || 1);
         const startRatio = 0.82;
         const endRatio = 0.68;
         const currentRatio = startRatio - ((startRatio - endRatio) * progress);

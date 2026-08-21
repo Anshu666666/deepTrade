@@ -139,7 +139,9 @@ async def cmd_start(message: types.Message):
         "📊 <code>/analyse &lt;ticker&gt;</code> - Perform a comprehensive financial analysis\n"
         "📰 <code>/news &lt;topic&gt;</code> - Fetch and summarize the latest news\n"
         "🔍 <code>/deepdive &lt;topic&gt;</code> - Conduct an in-depth research report\n"
-        "🔄 <code>/toggle</code> - Toggle between Live and Sandbox trading mode"
+        "🔄 <code>/toggle</code> - Toggle between Live and Sandbox trading mode\n"
+        "🔐 <code>/totp</code> - View or scan your 2FA QR code\n"
+        "♻️ <code>/reset_2fa</code> - Generate a fresh new 2FA secret key"
     )
     
     root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -180,6 +182,99 @@ async def cmd_deepdive(message: types.Message, command: CommandObject):
         return
     query_text = f"Conduct a comprehensive, deep-dive research report on: {command.args}"
     await process_query(message, query_text)
+
+@dp.message(Command("totp", "2fa", "setup_2fa"))
+async def cmd_totp(message: types.Message):
+    admin_chat_id = await db.get_setting("ADMIN_CHAT_ID")
+    chat_id = str(message.chat.id)
+    if admin_chat_id and chat_id != admin_chat_id:
+        await message.answer("❌ Unauthorized. Only the primary administrator can access 2FA settings.")
+        return
+        
+    secret = os.environ.get("WEB_OTP_SECRET")
+    if not secret:
+        import pyotp
+        secret = pyotp.random_base32()
+        os.environ["WEB_OTP_SECRET"] = secret
+        await db.set_setting("WEB_OTP_SECRET", secret)
+        
+    import pyotp
+    import qrcode
+    import io
+    
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name="admin@deeptrade.ai", issuer_name="DeepTrade")
+    
+    qr = qrcode.QRCode(border=2)
+    qr.add_data(uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    
+    qr_file = BufferedInputFile(buf.getvalue(), filename="totp_qr.png")
+    
+    caption = (
+        "🔐 <b>DeepTrade 2FA / TOTP Authenticator Setup</b>\n\n"
+        "Scan this QR code in <b>Google Authenticator</b>, <b>Apple Passwords</b>, or <b>1Password</b>.\n\n"
+        f"🔑 <b>Secret Key:</b> <code>{secret}</code>\n"
+        f"⏱️ <b>Current Code:</b> <code>{totp.now()}</code>\n\n"
+        "<i>Tip: If you ever lose your authenticator, use /totp to get it back, or /reset_2fa to generate a new key.</i>"
+    )
+    await message.answer_photo(photo=qr_file, caption=caption, parse_mode=ParseMode.HTML)
+
+@dp.message(Command("reset_2fa", "reset_totp"))
+async def cmd_reset_2fa(message: types.Message):
+    admin_chat_id = await db.get_setting("ADMIN_CHAT_ID")
+    chat_id = str(message.chat.id)
+    if admin_chat_id and chat_id != admin_chat_id:
+        await message.answer("❌ Unauthorized.")
+        return
+        
+    import pyotp
+    import qrcode
+    import io
+    from pathlib import Path
+    
+    new_secret = pyotp.random_base32()
+    os.environ["WEB_OTP_SECRET"] = new_secret
+    await db.set_setting("WEB_OTP_SECRET", new_secret)
+    
+    # Update .env
+    root_dir = Path(__file__).resolve().parent.parent.parent
+    env_file = root_dir / ".env"
+    if env_file.exists():
+        content = env_file.read_text(encoding="utf-8")
+        if "WEB_OTP_SECRET=" in content:
+            import re
+            content = re.sub(r"WEB_OTP_SECRET=.*", f"WEB_OTP_SECRET={new_secret}", content)
+        else:
+            content += f"\nWEB_OTP_SECRET={new_secret}\n"
+        env_file.write_text(content, encoding="utf-8")
+        
+    totp = pyotp.TOTP(new_secret)
+    uri = totp.provisioning_uri(name="admin@deeptrade.ai", issuer_name="DeepTrade")
+    
+    qr = qrcode.QRCode(border=2)
+    qr.add_data(uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    
+    qr_file = BufferedInputFile(buf.getvalue(), filename="new_totp_qr.png")
+    
+    caption = (
+        "🔄 <b>2FA Secret Successfully Reset!</b>\n\n"
+        "All previous sessions have been invalidated. Scan your new QR code below:\n\n"
+        f"🔑 <b>New Secret Key:</b> <code>{new_secret}</code>\n"
+        f"⏱️ <b>New Current Code:</b> <code>{totp.now()}</code>"
+    )
+    await message.answer_photo(photo=qr_file, caption=caption, parse_mode=ParseMode.HTML)
 
 @dp.message()
 async def handle_message(message: types.Message):

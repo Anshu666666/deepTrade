@@ -26,6 +26,8 @@ import logoValyu from '../assets/logos/logo-valyu.png';
 import VaultLock from '../components/forgeui/vault-lock';
 import authenticatorIphoneImg from '../assets/authenticator-iphone.png';
 import LaunchModal from '../components/landing/LaunchModal';
+import TotpSetupModal from '../components/landing/TotpSetupModal';
+import { ShieldCheck } from 'lucide-react';
 
 const Landing: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -37,6 +39,7 @@ const Landing: React.FC = () => {
   const headerBtnRef = useRef<HTMLDivElement>(null);
 
   const [isLaunchModalOpen, setIsLaunchModalOpen] = useState(false);
+  const [isTotpModalOpen, setIsTotpModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Play demo video only when scrolled into view
@@ -142,6 +145,12 @@ const Landing: React.FC = () => {
       <LaunchModal
         isOpen={isLaunchModalOpen}
         onClose={() => setIsLaunchModalOpen(false)}
+      />
+
+      {/* TOTP 2FA Setup Modal */}
+      <TotpSetupModal
+        isOpen={isTotpModalOpen}
+        onClose={() => setIsTotpModalOpen(false)}
       />
 
       {/* Global Stars Background (Above Phone, Below Section 1) */}
@@ -262,7 +271,7 @@ const Landing: React.FC = () => {
               <div key="gap12" />,
               <a key="12" href="https://valyu.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-full opacity-70 hover:opacity-100 transition-opacity"><img src={logoValyu} alt="Valyu" className="object-contain w-[130px] md:w-[165px] max-w-none brightness-200" /></a>,
             ]}
-            speed={60}
+            speed={22}
           />
         </div>
         
@@ -284,94 +293,67 @@ const Landing: React.FC = () => {
                 loop
                 muted
                 playsInline
-                controls
-                className="w-full h-auto block rounded-xl"
+                preload="metadata"
+                className="w-full h-auto block rounded-xl shadow-inner"
               />
             </div>
 
-            {/* MacBook Mockup */}
+            {/* MacBook Mockup Underlay */}
             <img 
               src={macbookImg} 
-              alt="MacBook Mockup" 
-              className="absolute -bottom-20 -left-4 md:-bottom-24 md:-left-16 lg:-bottom-32 lg:-left-24 w-44 md:w-64 lg:w-[400px] object-contain z-20 pointer-events-none drop-shadow-2xl"
+              alt="MacBook Pro Mockup" 
+              className="absolute -bottom-16 -left-8 md:-bottom-24 md:-left-16 lg:-bottom-32 lg:-left-20 w-[115%] max-w-none object-contain z-0 pointer-events-none drop-shadow-2xl opacity-90"
             />
           </div>
 
-          {/* Text Section */}
-          <div className="max-w-xl w-full text-center md:text-right z-10 relative md:w-[45%] pb-16 md:pb-0">
+          {/* Text Section (Right) */}
+          <div className="max-w-xl text-center md:text-left z-20 md:w-[45%]">
             <h2 
               className="font-normal mb-6" 
               style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
             >
-              The Autonomous Analyst.
+              Dual Engine Intelligence.
             </h2>
-            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-lg md:ml-auto" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed mb-4" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               DeepTrade doesn't just display data — it researches it. Powered by Exa for real-time web intelligence and Valyu for financial datasets and filings, the agent pulls from both and synthesizes it into one clear answer, not a wall of raw numbers.
+            </p>
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+              Ask a question, and DeepTrade searches live web sources and deep financial filings simultaneously — returning a structured, cited report before you finish typing your next thought.
             </p>
           </div>
         </div>
 
-        {/* SECTION 4: OPEN BY DESIGN */}
-        <div
-          className="relative min-h-[100dvh] flex flex-col items-center justify-center px-8 md:px-12 lg:px-24 text-center"
-          style={{
-            '--s4-label-gap':      'clamp(1.5rem, 3vw, 2.5rem)',
-            '--s4-heading-gap':    'clamp(1.75rem, 3.5vw, 3rem)',
-            '--s4-para-gap':       'clamp(1rem, 2vw, 1.5rem)',
-            '--s4-line-height':    '1.5',
-            '--s4-label-tracking': '0.2em',
-          } as React.CSSProperties}
-        >
-          <div className="max-w-3xl w-full flex flex-col items-center z-10 relative">
-
-            {/* Label row */}
-            <div
-              className="text-white/70 text-[0.7rem] md:text-xs uppercase flex flex-col md:flex-row gap-2 md:gap-4 items-center text-center"
-              style={{ letterSpacing: 'var(--s4-label-tracking)', marginBottom: 'var(--s4-label-gap)' }}
+        {/* SECTION 4: THE NETWORK */}
+        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-32 md:gap-0 pt-16 md:pt-0">
+          
+          {/* Text Section (Left) - Enhanced with z-30 pointer-events-auto */}
+          <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[45%] md:ml-12 lg:ml-24 pointer-events-auto">
+            <h2 
+              className="font-normal mb-6" 
+              style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
             >
-              <span>OPEN SOURCE</span>
-              <span className="hidden md:block w-1 h-1 rounded-full bg-white/30" />
-              <span>MODEL-AGNOSTIC</span>
-              <span className="hidden md:block w-1 h-1 rounded-full bg-white/30" />
-              <span>LOCAL OR CLOUD</span>
-            </div>
-
-            {/* Heading */}
-            <h2
-              className="font-normal"
-              style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)', marginBottom: 'var(--s4-heading-gap)' }}
-            >
-              Open By Design.
+              Zero Intermediaries.
             </h2>
-
-            {/* Body copy */}
-            <div
-              className="text-zinc-300 text-xs sm:text-sm md:text-base max-w-2xl flex flex-col"
-              style={{ lineHeight: 'var(--s4-line-height)', gap: 'var(--s4-para-gap)', textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}
-            >
-              <p className="m-0">
-                DeepTrade is fully open-source — audit it, fork it, make it yours. Bring
-                your own model through OpenRouter, whether that's Claude, GPT, or an
-                open-weight LLM, and run it wherever you want: locally on your own machine,
-                or deployed to any cloud. The cost and the control are entirely yours.
-              </p>
-              <p className="m-0">
-                Bring your own model — the LLM is yours to choose. Order execution runs
-                on the official Upstox API, so every trade is placed through Upstox's own
-                infrastructure, not a third-party intermediary.
-              </p>
-            </div>
-
-            {/* Globe Container - Absolute at bottom right */}
-            <div className="absolute -bottom-56 -right-20 md:-bottom-80 md:-right-56 lg:-bottom-[420px] lg:-right-[320px] w-60 md:w-[360px] lg:w-[560px] z-[-1] pointer-events-auto opacity-70">
-              <GlobeAnalytics />
-            </div>
-
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed mb-4" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+              Your credentials never touch our servers. Because there are no servers.
+            </p>
+            <p className="text-zinc-300 text-sm sm:text-base leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
+              DeepTrade is fully open-source — audit it, fork it, make it yours. Bring
+              your own API keys and run the entire stack on your own machine. Built directly
+              on the official Upstox API, so every trade is placed through Upstox's own
+              infrastructure, not a third-party intermediary.
+            </p>
           </div>
+
+          {/* Globe Container - Absolute at bottom right */}
+          <div className="absolute -bottom-56 -right-20 md:-bottom-80 md:-right-56 lg:-bottom-[420px] lg:-right-[320px] w-60 md:w-[360px] lg:w-[560px] z-[-1] pointer-events-auto opacity-70">
+            <GlobeAnalytics />
+          </div>
+
         </div>
 
         {/* SECTION 5: SECURITY & SANDBOX */}
-        <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
+        <div className="relative min-h-0 md:min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-8 md:gap-0 pt-8 md:pt-0 pb-8 md:pb-16">
           
           {/* Text Section (Left) - Enhanced with z-30 pointer-events-auto */}
           <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[45%] md:ml-12 lg:ml-24 pointer-events-auto">
@@ -387,12 +369,27 @@ const Landing: React.FC = () => {
             <p className="text-zinc-300 text-sm sm:text-base leading-relaxed" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.8)' }}>
               Not ready to risk capital? Engage the Sandbox Mock Registry. The agent simulates real market executions with a virtual portfolio, letting you practice research and order execution with ₹10,00,000 in virtual funds and zero financial exposure.
             </p>
+
+            {/* Interactive 2FA Modal Trigger Button */}
+            <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <button
+                onClick={() => setIsTotpModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-[#54A1FD] text-xs font-semibold tracking-wide transition-all shadow-[0_0_20px_rgba(84,161,253,0.15)] cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Set Up Authenticator / Scan QR</span>
+              </button>
+            </div>
           </div>
 
           {/* Visuals Container (Right) - z-10 */}
-          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:right-[8%] lg:right-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-12 md:mt-0 pointer-events-none sm:pointer-events-auto">
-            {/* Vault Component */}
-            <div className="w-full flex items-center justify-center relative z-10">
+          <div className="relative w-[90%] md:w-[45%] lg:w-[50%] md:absolute md:right-[8%] lg:right-[12%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
+            {/* Vault Component - clickable */}
+            <div 
+              className="w-full flex items-center justify-center relative z-10 cursor-pointer pointer-events-auto transition-transform hover:scale-[1.01]"
+              onClick={() => setIsTotpModalOpen(true)}
+              title="Click to view or reset your 2FA QR code"
+            >
               <VaultLock 
                 className="w-full lg:w-[650px]" 
                 cardTitle="TOTP Authenticator"
@@ -404,13 +401,13 @@ const Landing: React.FC = () => {
             <img 
               src={authenticatorIphoneImg} 
               alt="Authenticator App on iPhone" 
-              className="absolute -bottom-28 -right-8 md:-bottom-32 md:-right-24 lg:-bottom-48 lg:-right-32 w-44 md:w-64 lg:w-[400px] object-contain z-10 pointer-events-none drop-shadow-2xl"
+              className="absolute -bottom-16 -right-4 sm:-bottom-24 sm:-right-8 md:-bottom-32 md:-right-24 lg:-bottom-48 lg:-right-32 w-36 sm:w-44 md:w-64 lg:w-[400px] object-contain z-10 pointer-events-none drop-shadow-2xl"
             />
           </div>
         </div>
 
-        {/* Spacer to add gap between Section 5 and Footer */}
-        <div className="w-full h-32 md:h-48 lg:h-[250px] pointer-events-none" />
+        {/* Spacer between Section 5 and Footer: tight on mobile, spacious on desktop */}
+        <div className="w-full h-6 sm:h-12 md:h-48 lg:h-[250px] pointer-events-none" />
       </div>
 
       {/* POP-UP TYPING KEYBOARD */}

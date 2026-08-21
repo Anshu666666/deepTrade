@@ -162,6 +162,91 @@ async def auth_status(request: Request):
     except HTTPException:
         return {"authenticated": False}
 
+@app.get("/api/auth/totp-setup")
+async def get_totp_setup():
+    secret = os.environ.get("WEB_OTP_SECRET")
+    if not secret:
+        import pyotp
+        secret = pyotp.random_base32()
+        os.environ["WEB_OTP_SECRET"] = secret
+        await db.set_setting("WEB_OTP_SECRET", secret)
+        # Update .env
+        env_file = Path(__file__).resolve().parent.parent.parent / ".env"
+        if env_file.exists():
+            content = env_file.read_text(encoding="utf-8")
+            if "WEB_OTP_SECRET=" in content:
+                import re
+                content = re.sub(r"WEB_OTP_SECRET=.*", f"WEB_OTP_SECRET={secret}", content)
+            else:
+                content += f"\nWEB_OTP_SECRET={secret}\n"
+            env_file.write_text(content, encoding="utf-8")
+    
+    import pyotp
+    import qrcode
+    import io
+    import base64
+    
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name="admin@deeptrade.ai", issuer_name="DeepTrade")
+    
+    qr = qrcode.QRCode(border=2)
+    qr.add_data(uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    qr_b64 = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
+    
+    return {
+        "secret": secret,
+        "provisioning_uri": uri,
+        "qr_code": qr_b64,
+        "current_code": totp.now()
+    }
+
+@app.post("/api/auth/totp-reset")
+async def reset_totp_secret():
+    import pyotp
+    import qrcode
+    import io
+    import base64
+    
+    new_secret = pyotp.random_base32()
+    os.environ["WEB_OTP_SECRET"] = new_secret
+    await db.set_setting("WEB_OTP_SECRET", new_secret)
+    
+    # Update .env
+    env_file = Path(__file__).resolve().parent.parent.parent / ".env"
+    if env_file.exists():
+        content = env_file.read_text(encoding="utf-8")
+        if "WEB_OTP_SECRET=" in content:
+            import re
+            content = re.sub(r"WEB_OTP_SECRET=.*", f"WEB_OTP_SECRET={new_secret}", content)
+        else:
+            content += f"\nWEB_OTP_SECRET={new_secret}\n"
+        env_file.write_text(content, encoding="utf-8")
+        
+    totp = pyotp.TOTP(new_secret)
+    uri = totp.provisioning_uri(name="admin@deeptrade.ai", issuer_name="DeepTrade")
+    
+    qr = qrcode.QRCode(border=2)
+    qr.add_data(uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    qr_b64 = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
+    
+    return {
+        "secret": new_secret,
+        "provisioning_uri": uri,
+        "qr_code": qr_b64,
+        "current_code": totp.now(),
+        "message": "2FA secret regenerated successfully"
+    }
+
 
 def _is_supervisor_response(last_msg, node_name: str) -> bool:
     if getattr(last_msg, "type", "") != "ai":
@@ -545,10 +630,185 @@ async def get_ip():
     except Exception as e:
         return {"error": str(e)}
 
+def render_oauth_callback_page(is_success: bool, title: str, subtitle: str, details: dict = None, error_msg: str = None) -> HTMLResponse:
+    details_html = ""
+    if details:
+        rows = "".join([f"""
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                <span style="color: #71717a; font-size: 11.5px; font-family: monospace;">{k}</span>
+                <span style="color: #e4e4e7; font-size: 11.5px; font-family: monospace; font-weight: 500;">{v}</span>
+            </div>
+        """ for k, v in details.items()])
+        details_html = f"""
+        <div style="background: rgba(24, 24, 27, 0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; margin: 18px 0; text-align: left;">
+            {rows}
+        </div>
+        """
+    
+    status_icon = """
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 100%); border: 1px solid rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+    """ if is_success else """
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+    """
+    
+    badge_text = "UPSTOX AUTHENTICATED" if is_success else "AUTHORIZATION FAILED"
+    badge_color = "#10b981" if is_success else "#ef4444"
+    badge_bg = "rgba(16, 185, 129, 0.1)" if is_success else "rgba(239, 68, 68, 0.1)"
+    badge_border = "rgba(16, 185, 129, 0.3)" if is_success else "rgba(239, 68, 68, 0.3)"
+    
+    err_div = f'<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 10px; padding: 10px 14px; color: #f87171; font-size: 11.5px; font-family: monospace; margin: 16px 0; text-align: left; word-break: break-word;">{error_msg}</div>' if error_msg else ''
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepTrade · Upstox Live Session</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            background: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }}
+        .ambient-glow {{
+            position: absolute;
+            width: 550px;
+            height: 550px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(32, 155, 255, 0.12) 0%, rgba(0, 95, 214, 0.04) 50%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events-none;
+            filter: blur(80px);
+        }}
+        .card {{
+            position: relative;
+            background: rgba(10, 10, 12, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 20px;
+            padding: 36px 28px;
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(84, 161, 253, 0.08);
+            z-index: 10;
+        }}
+        .brand-name {{
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: #ffffff;
+            margin-bottom: 20px;
+            display: inline-block;
+        }}
+        .badge {{
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: {badge_color};
+            background: {badge_bg};
+            border: 1px solid {badge_border};
+            margin-bottom: 12px;
+        }}
+        h1 {{
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }}
+        p.subtitle {{
+            color: #a1a1aa;
+            font-size: 13px;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }}
+        .btn-candy {{
+            display: block;
+            width: 100%;
+            padding: 11px 20px;
+            border-radius: 9999px;
+            border: 1px solid #54A1FD;
+            background: radial-gradient(95% 60% at 50% 75%, #005FD6 0%, #209BFF 100%);
+            box-shadow: 0px 4px 28px -8px #1187FF, inset 0px 1px 8px -4px #FFFFFF;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 13.5px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease-out;
+            margin-top: 8px;
+        }}
+        .btn-candy:hover {{
+            filter: brightness(1.1);
+            transform: scale(1.01);
+        }}
+        .btn-candy:active {{
+            transform: scale(0.98);
+        }}
+        .footer-note {{
+            margin-top: 18px;
+            font-size: 10.5px;
+            color: #52525b;
+            letter-spacing: 0.02em;
+        }}
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+    <div class="card">
+        <span class="brand-name">DeepTrade</span>
+        <div>
+            {status_icon}
+            <div class="badge">{badge_text}</div>
+            <h1>{title}</h1>
+            <p class="subtitle">{subtitle}</p>
+        </div>
+        {details_html}
+        {err_div}
+        <button class="btn-candy" onclick="window.close();">Close Window & Return to Chat</button>
+        <p class="footer-note">Protected by 256-bit Local Encryption · Direct Broker Connection</p>
+    </div>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
 @app.get("/upstox/callback")
 async def upstox_callback(code: str = None):
     if not code:
-        return HTMLResponse("<h2>Error: No code provided</h2>")
+        return render_oauth_callback_page(
+            is_success=False,
+            title="Authentication Failed",
+            subtitle="No authorization code was received from the Upstox OAuth portal.",
+            error_msg="Missing 'code' query parameter in callback request."
+        )
     
     client_id = os.environ.get("UPSTOX_CLIENT_ID")
     client_secret = os.environ.get("UPSTOX_CLIENT_SECRET")
@@ -561,7 +821,12 @@ async def upstox_callback(code: str = None):
         redirect_uri = None
     
     if not all([client_id, client_secret, redirect_uri]):
-        return HTMLResponse("<h2>Error: Missing UPSTOX_CLIENT_ID, UPSTOX_CLIENT_SECRET in .env, or WEBHOOK_DOMAIN not configured in DB.</h2>")
+        return render_oauth_callback_page(
+            is_success=False,
+            title="Configuration Incomplete",
+            subtitle="Your environment variables or webhook domain are missing required keys.",
+            error_msg="Please check UPSTOX_CLIENT_ID, UPSTOX_CLIENT_SECRET in .env and WEBHOOK_DOMAIN in SQLite DB."
+        )
 
     url = 'https://api.upstox.com/v2/login/authorization/token'
     headers = {
@@ -594,10 +859,26 @@ async def upstox_callback(code: str = None):
             admin_chat_id = await db.get_setting("ADMIN_CHAT_ID")
             if admin_chat_id:
                 try:
-                    await bot.send_message(admin_chat_id, "✅ <b>Live token successfully refreshed for today!</b>")
+                    await bot.send_message(admin_chat_id, "✅ <b>Live Upstox token successfully activated for today!</b>\nYour live trading orders will now execute with direct broker connectivity.")
                 except:
                     pass
         
-        return HTMLResponse("<h2>✅ Success! You can close this window.</h2><p>Your live token has been updated securely.</p>")
+        details = {
+            "BROKER": "Upstox Official v2 API",
+            "STATUS": "ACTIVE (Live Orders Enabled)",
+            "SECURITY": "AES In-Memory & Local SQLite DB",
+            "VALID UNTIL": "03:30 AM IST (Next Session)"
+        }
+        return render_oauth_callback_page(
+            is_success=True,
+            title="Live Session Activated",
+            subtitle="Your Upstox account is securely authorized. You can now execute live market orders and access portfolio analytics.",
+            details=details
+        )
     else:
-        return HTMLResponse(f"<h2>❌ Error getting token: {response.status_code}</h2><p>{response.text}</p>")
+        return render_oauth_callback_page(
+            is_success=False,
+            title="Token Exchange Failed",
+            subtitle="Upstox rejected the authorization code exchange request.",
+            error_msg=f"HTTP {response.status_code}: {response.text}"
+        )
