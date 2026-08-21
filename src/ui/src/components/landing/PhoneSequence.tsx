@@ -28,22 +28,38 @@ const PhoneSequence: React.FC = () => {
   useEffect(() => {
     if (frameUrls.length === 0) return;
 
-    let loadedCount = 0;
-    const images: HTMLImageElement[] = [];
+    const images: HTMLImageElement[] = new Array(frameUrls.length);
+    imagesRef.current = images;
 
-    // Preload images
-    frameUrls.forEach((url) => {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount === frameUrls.length) {
-          imagesRef.current = images;
-          setLoaded(true);
+    // 1. Immediately load Frame 0 so the initial view and ScrollTrigger initialize instantly
+    const firstImg = new Image();
+    firstImg.src = frameUrls[0];
+    firstImg.onload = () => {
+      images[0] = firstImg;
+      setLoaded(true);
+
+      // 2. Progressively stream the remaining frames in gentle batches to keep mobile network free
+      let currentIndex = 1;
+      const batchSize = 4;
+
+      const loadNextBatch = () => {
+        if (currentIndex >= frameUrls.length) return;
+        const endIndex = Math.min(currentIndex + batchSize, frameUrls.length);
+        
+        for (let i = currentIndex; i < endIndex; i++) {
+          const img = new Image();
+          const targetIndex = i;
+          img.src = frameUrls[targetIndex];
+          img.onload = () => {
+            images[targetIndex] = img;
+          };
         }
+        currentIndex = endIndex;
+        setTimeout(loadNextBatch, 60);
       };
-      images.push(img);
-    });
+
+      loadNextBatch();
+    };
   }, []);
 
   useEffect(() => {
@@ -55,7 +71,19 @@ const PhoneSequence: React.FC = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
-      const img = imagesRef.current[index];
+      // Get frame or fallback to nearest loaded frame if user scrolls while still streaming
+      let img = imagesRef.current[index];
+      if (!img || !img.complete) {
+        for (let i = index - 1; i >= 0; i--) {
+          if (imagesRef.current[i] && imagesRef.current[i].complete) {
+            img = imagesRef.current[i];
+            break;
+          }
+        }
+        if (!img || !img.complete) {
+          img = imagesRef.current[0];
+        }
+      }
       if (!img || !img.complete) return;
 
       // Handle HiDPI / Retina mobile displays (DPR 2x/3x) to eliminate pixelation

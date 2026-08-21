@@ -26,6 +26,7 @@ import logoValyu from '../assets/logos/logo-valyu.png';
 import VaultLock from '../components/forgeui/vault-lock';
 import authenticatorIphoneImg from '../assets/authenticator-iphone.png';
 import LaunchModal from '../components/landing/LaunchModal';
+import { LandingLoader } from '../components/landing/LandingLoader';
 
 const Landing: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -143,6 +144,9 @@ const Landing: React.FC = () => {
   return (
     <div className="relative bg-black font-sans min-h-screen w-full max-w-[100vw] overflow-x-clip">
       
+      {/* Sleek Theme-Matched Preloader */}
+      <LandingLoader />
+
       {/* Launch Modal for Public / Vercel visitors */}
       <LaunchModal
         isOpen={isLaunchModalOpen}
@@ -293,7 +297,7 @@ const Landing: React.FC = () => {
                 muted
                 playsInline
                 controls
-                preload="metadata"
+                preload="none"
                 className="w-full h-auto block rounded-xl"
               />
             </div>
