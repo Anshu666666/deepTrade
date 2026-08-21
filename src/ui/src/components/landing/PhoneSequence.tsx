@@ -82,9 +82,9 @@ const PhoneSequence: React.FC = () => {
 
       if (isMobile) {
         // Item 1: Centered vertically in the space below the header and text card with balanced margin
-        const textBlockBottom = 250; // approximate bottom of text + system commands card
+        const textBlockBottom = 320; // bottom of text + system commands card when top-[92px] is applied
         const availableHeight = Math.max(logicalHeight - textBlockBottom - 16, 200);
-        const baseScale = Math.min((availableHeight * 0.82) / img.height, (logicalWidth * 0.94) / (img.width * 0.42));
+        const baseScale = Math.min((availableHeight * 0.88) / img.height, (logicalWidth * 0.94) / (img.width * 0.42));
         const scale = baseScale * zoomFactor;
         const drawWidth = img.width * scale;
         const drawHeight = img.height * scale;
@@ -185,8 +185,8 @@ const PhoneSequence: React.FC = () => {
       {/* mix-blend-screen makes the black background of the mockup frames completely transparent! */}
       <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none mix-blend-screen" />
 
-      {/* Content block: starts comfortably below the fixed header (top-20 on mobile), centered on desktop */}
-      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-20 sm:top-24 md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
+      {/* Content block: positioned safely below header with top-[92px] on mobile */}
+      <div className="absolute left-4 right-4 sm:left-8 sm:right-auto md:left-32 lg:left-40 xl:left-[15%] max-w-xl z-10 text-white pointer-events-auto top-[92px] sm:top-[100px] md:top-0 bottom-auto md:bottom-0 box-border flex flex-col justify-start md:justify-center">
 
         <h2
           className="font-normal mb-1 sm:mb-2 md:mb-4"
