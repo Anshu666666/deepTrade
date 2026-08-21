@@ -13,3 +13,4 @@ sandbox_db.json
 .vscode/
 .idea/
 *totp_qr*.png
+research.md
