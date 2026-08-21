@@ -378,7 +378,7 @@ const Landing: React.FC = () => {
         <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-end px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
           
           {/* Text Section (Right on desktop, First on mobile) */}
-          <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[42%] md:mr-8 lg:mr-16 pointer-events-auto">
+          <div className="max-w-xl w-full text-center md:text-left z-30 relative md:w-[44%] md:mr-6 lg:mr-14 pointer-events-auto">
             <h2 
               className="font-normal mb-6" 
               style={{ fontFamily: 'Lastik, serif', fontSize: 'clamp(1.8rem, 4vw, 4rem)' }}
@@ -393,8 +393,8 @@ const Landing: React.FC = () => {
             </p>
           </div>
 
-          {/* Visuals Container (Left on desktop, Second on mobile) */}
-          <div className="relative w-[90%] md:w-[45%] lg:w-[48%] md:absolute md:left-[5%] lg:left-[8%] md:top-1/2 md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
+          {/* Visuals Container (Left on desktop, Second on mobile - pushed lower and slightly closer) */}
+          <div className="relative w-[90%] md:w-[45%] lg:w-[48%] md:absolute md:left-[8%] lg:left-[11%] md:top-[56%] md:-translate-y-1/2 z-10 flex flex-col items-center mt-6 md:mt-0 pointer-events-none sm:pointer-events-auto">
             {/* Vault Component */}
             <div className="w-full flex items-center justify-center relative z-10">
               <VaultLock 
