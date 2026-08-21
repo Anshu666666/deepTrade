@@ -225,6 +225,8 @@ async def get_live_token_status() -> dict:
                     return {"token": None, "is_valid": False}
                 
                 token, updated_at = row
+                if not token or not str(token).strip():
+                    return {"token": None, "is_valid": False}
                 
                 from datetime import datetime, timezone, timedelta
                 # Current time in IST
