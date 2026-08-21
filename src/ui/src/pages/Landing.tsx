@@ -363,17 +363,16 @@ const Landing: React.FC = () => {
               </p>
             </div>
 
-          </div>
+            {/* Globe Container - Absolute at bottom right */}
+            <div className="absolute -bottom-56 -right-20 md:-bottom-80 md:-right-56 lg:-bottom-[420px] lg:-right-[320px] w-60 md:w-[360px] lg:w-[560px] z-[-1] pointer-events-auto opacity-70">
+              <GlobeAnalytics />
+            </div>
 
-          {/* Globe Container - Full uncut sphere positioned to the right with margin */}
-          <div className="absolute top-1/2 -translate-y-1/2 right-2 sm:right-6 md:right-12 lg:right-20 w-60 sm:w-80 md:w-[420px] lg:w-[500px] z-0 pointer-events-auto opacity-75 drop-shadow-2xl">
-            <GlobeAnalytics />
           </div>
-
         </div>
 
         {/* Generous margin/spacer between Section 4 and Section 5 */}
-        <div className="w-full h-32 md:h-56 lg:h-72 pointer-events-none" />
+        <div className="w-full h-48 md:h-80 lg:h-[480px] pointer-events-none" />
 
         {/* SECTION 5: SECURITY & SANDBOX */}
         <div className="relative min-h-[100dvh] flex flex-col md:flex-row items-center justify-center md:justify-start px-8 md:px-12 lg:px-24 gap-16 md:gap-0 pt-16 md:pt-0 pb-16">
