@@ -38,11 +38,13 @@ const Landing: React.FC = () => {
   const navigate = useNavigate();
 
   const handleInitializeTerminal = () => {
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocal) {
-      navigate('/login');
-    } else {
+    // Check if promotional showcase mode is enabled (e.g. Anshu's public Vercel promo deployment)
+    const isPromoMode = import.meta.env.VITE_PROMO_MODE === 'true';
+    if (isPromoMode) {
       setIsLaunchModalOpen(true);
+    } else {
+      // Normal execution: local machine or private self-hosted deployment
+      navigate('/login');
     }
   };
 
