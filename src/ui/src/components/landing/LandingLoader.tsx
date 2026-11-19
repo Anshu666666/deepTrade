@@ -3,89 +3,158 @@ import React, { useEffect, useState } from 'react';
 interface LandingLoaderProps {
   onComplete?: () => void;
   minDuration?: number;
-  maxDuration?: number;
+  strict?: boolean;
 }
 
 export const LandingLoader: React.FC<LandingLoaderProps> = ({
   onComplete,
-  minDuration = 600,
-  maxDuration = 1600,
+  minDuration = 1000,
+  strict = true,
 }) => {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('INITIALIZING ENVIRONMENT...');
   const [isVisible, setIsVisible] = useState(true);
   const [isFading, setIsFading] = useState(false);
+  const [assetsReady, setAssetsReady] = useState(false);
 
   useEffect(() => {
-    const startTime = Date.now();
+    let interval: ReturnType<typeof setInterval>;
+    let hardTimeout: ReturnType<typeof setTimeout>;
+    let startTime: number;
 
-    // Check if initial critical assets (fonts + DOM) are ready
-    const checkAssetsReady = async () => {
-      if (document.fonts) {
-        try {
-          await document.fonts.ready;
-        } catch {
-          // ignore font loading error fallback
+    const begin = () => {
+      startTime = Date.now();
+
+      // Wait for real asset readiness: fonts + window load (images, stylesheets, iframes)
+      const waitForAssets = async () => {
+        const tasks: Promise<void>[] = [];
+
+        // 1. Fonts must be ready before we reveal text
+        if (document.fonts) {
+          tasks.push(
+            document.fonts.ready.then(() => undefined).catch(() => undefined),
+          );
         }
-      }
-    };
 
-    checkAssetsReady();
+        // 2. All initial images, stylesheets, iframes fully loaded
+        tasks.push(
+          new Promise<void>((resolve) => {
+            if (document.readyState === 'complete') {
+              resolve();
+            } else {
+              window.addEventListener(
+                'load',
+                () => resolve(),
+                { once: true },
+              );
+            }
+          }),
+        );
 
-    // Smooth simulated realistic loader progress curve
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const calculatedProgress = Math.min(Math.round((elapsed / maxDuration) * 100), 99);
+        // 3. Embedded videos reach at least first frame metadata
+        tasks.push(
+          Promise.all(
+            Array.from(document.querySelectorAll('video')).map((video) => {
+              if (video.readyState >= 1) {
+                return Promise.resolve();
+              }
+              return new Promise<void>((resolveVideo) => {
+                video.addEventListener(
+                  'loadedmetadata',
+                  () => resolveVideo(),
+                  { once: true },
+                );
+              });
+            }),
+          ).then(() => undefined),
+        );
 
-      setProgress((prev) => Math.max(prev, calculatedProgress));
+        await Promise.all(tasks);
+        setAssetsReady(true);
+      };
 
-      if (calculatedProgress > 70) {
-        setStatusText('CONNECTING BROKER RUNTIME...');
-      } else if (calculatedProgress > 35) {
-        setStatusText('SYNTHESIZING MARKET INTELLIGENCE...');
-      }
+      waitForAssets();
 
-      if (elapsed >= minDuration && document.readyState === 'complete') {
+      // Smooth simulated progress curve (never races ahead of reality)
+      interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        // Real progress only counts once assets are actually ready
+        const calculatedProgress = assetsReady
+          ? Math.min(Math.round((elapsed / minDuration) * 100), 99)
+          : 0;
+
+        setProgress((prev) => Math.max(prev, calculatedProgress));
+
+        if (calculatedProgress > 70) {
+          setStatusText('CONNECTING BROKER RUNTIME...');
+        } else if (calculatedProgress > 35) {
+          setStatusText('SYNTHESIZING MARKET INTELLIGENCE...');
+        }
+
+        // Strict: only finish when minimum duration has passed AND assets are ready
+        if (strict ? elapsed >= minDuration && assetsReady : elapsed >= minDuration) {
+          setProgress(100);
+          setStatusText('READY');
+          clearInterval(interval);
+
+          setTimeout(() => {
+            setIsFading(true);
+            setTimeout(() => {
+              setIsVisible(false);
+              if (document.body) {
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+              }
+              onComplete?.();
+            }, 600);
+          }, 200);
+        }
+      }, 40);
+
+      // Hard fallback so a hung asset never blocks forever
+      hardTimeout = setTimeout(() => {
         setProgress(100);
         setStatusText('READY');
         clearInterval(interval);
-
+        setAssetsReady(true);
         setTimeout(() => {
           setIsFading(true);
           setTimeout(() => {
             setIsVisible(false);
+            if (document.body) {
+              document.body.style.overflow = '';
+              document.documentElement.style.overflow = '';
+            }
             onComplete?.();
           }, 600);
-        }, 200);
-      }
-    }, 40);
+        }, 150);
+      }, minDuration + 8000);
 
-    // Hard fallback timeout
-    const hardTimeout = setTimeout(() => {
-      setProgress(100);
-      setStatusText('READY');
-      clearInterval(interval);
-      setTimeout(() => {
-        setIsFading(true);
-        setTimeout(() => {
-          setIsVisible(false);
-          onComplete?.();
-        }, 600);
-      }, 150);
-    }, maxDuration);
+      // Block all interaction while the strict loader is up
+      if (strict && document.body) {
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+      }
+    };
+
+    begin();
 
     return () => {
       clearInterval(interval);
       clearTimeout(hardTimeout);
+      if (document.body) {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+      }
     };
-  }, [minDuration, maxDuration, onComplete]);
+  }, [minDuration, strict, onComplete]);
 
   if (!isVisible) return null;
 
   return (
     <div
       className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#050608] text-white select-none transition-all duration-700 ease-out ${
-        isFading ? 'opacity-0 scale-[1.02] pointer-events-none' : 'opacity-100 scale-100'
+        isFading ? 'opacity-0 scale-[1.02] pointer-events-none' : 'pointer-events-auto'
       }`}
     >
       {/* Background ambient glow */}
