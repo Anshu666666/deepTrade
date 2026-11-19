@@ -41,6 +41,7 @@ function App() {
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -415,14 +416,50 @@ function App() {
         <StarsBackground starColor="#ffffff" speed={20} className="opacity-30" />
       </div>
       <div className="app-layout" style={{ position: 'relative', zIndex: 1 }}>
-      <Sidebar 
-        threads={threads} 
-        activeThreadId={activeThreadId} 
-        onSelectThread={handleSelectThread} 
-        onNewThread={handleNewThread} 
-      />
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay"
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 25,
+              background: 'rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}
+          />
+        )}
+        <Sidebar 
+          threads={threads} 
+          activeThreadId={activeThreadId} 
+          onSelectThread={handleSelectThread} 
+          onNewThread={handleNewThread}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
       <div className="app-container">
         <header>
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setSidebarOpen(prev => !prev)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'rgba(255,255,255,0.85)',
+              padding: '0 10px',
+              cursor: 'pointer',
+              fontSize: '1.5rem',
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 31,
+              lineHeight: 1,
+            }}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
           <h1>DeepTrade</h1>
           <div className="subtitle">Stock Market &amp; Financial Analyst</div>
         </header>
@@ -570,7 +607,8 @@ function App() {
                 left: 0,
                 width: '100%',
                 zIndex: 100,
-                overflow: 'hidden',
+                maxHeight: '50vh',
+                overflow: 'hidden auto',
                 background: 'rgba(255,255,255,0.06)',
                 backdropFilter: 'blur(24px) saturate(160%)',
                 WebkitBackdropFilter: 'blur(24px) saturate(160%)',
@@ -655,6 +693,10 @@ function App() {
                 )}
                 <input
                   type="text"
+                  inputMode="text"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  enterKeyHint="send"
                   value={input}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}

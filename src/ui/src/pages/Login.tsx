@@ -46,7 +46,7 @@ const Login: React.FC = () => {
   return (
     <div style={{
       backgroundColor: '#000',
-      minHeight: '100vh',
+      minHeight: '100dvh',
       color: 'white',
       display: 'flex',
       flexDirection: 'column',
@@ -208,6 +208,9 @@ const Login: React.FC = () => {
               {/* OTP Input */}
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
                 placeholder="000000"
                 maxLength={6}
                 value={code}
